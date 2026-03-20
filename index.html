@@ -188,22 +188,8 @@ function normTipo(raw){
   if(/compliance/i.test(s))return"Compliance";
   return s||"Outros";
 }
+function normRisco(raw){const s=raw.trim().toLowerCase();if(s==="highest"||s==="high"||s==="alto")return"Alto";if(s==="medium"||s==="médio"||s==="medio")return"Médio";return"Baixo"}
 
-function normRisco(raw) {
-  if (!raw) return "Baixo";
-
-  const s = String(raw)
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .trim();
-
-  if (s.includes("alto") || s.includes("high") || s.includes("highest")) return "Alto";
-  if (s.includes("medio") || s.includes("medium")) return "Médio";
-  if (s.includes("baixo") || s.includes("low")) return "Baixo";
-
-  return "Baixo";
-}
 function parseWorkbook(wb){
   const results=[];
   for(const name of wb.SheetNames){
@@ -212,27 +198,7 @@ function parseWorkbook(wb){
       const id=String(row["Código"]||row["Chave"]||row["Key"]||row["Issue key"]||"").trim();
       if(!id)continue;
       const tipo=normTipo(String(row["Tipo de item"]||row["Issue Type"]||row["Tipo"]||""));
-      
-    let riscoRaw = "";
-
-    // REGRA CORRETA: para Alertas PLD, usar exclusivamente a Classificação Risco Usuário (coluna N)
-    if (tipo === "Alerta PLD") {
-      riscoRaw =
-        row["Classificação Risco Usuário"] ||
-        row["Classificacao Risco Usuario"] ||
-        row["Classificacao de Risco Usuario"] ||
-        "";
-    } else {
-      // fallback para outros tipos
-      riscoRaw =
-        row["Risco"] ||
-        row["Prioridade"] ||
-        row["Priority"] ||
-        "";
-    }
-
-    const risco = normRisco(riscoRaw);
-
+      const risco=normRisco(String(row["Prioridade"]||row["Priority"]||row["Risco"]||""));
       const transPld=parseDate(row["Data da Transação (PLD)"]||row["Data Transação PLD"]||row["Data Transação - PLD"]||row["Data Transacao PLD"]||row["Data da Transacao (PLD)"]||row["Data Transação"]||row["Transaction Date"]||row["Trans Date"]||row["Custom field (Data da Transação (PLD))"]||row["Custom field (Data Transação PLD)"]||null);
       results.push({
         id, resumo:String(row["Resumo"]||row["Summary"]||"").trim(),
@@ -255,34 +221,7 @@ function extractEmail(r){const m=r.match(/[\w.-]+@[\w.-]+\.\w+/);return m?m[0].t
 function formatCPF(c){return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4")}
 function buildPersonCorrelations(cases){
   const map=new Map();
-  for(const c of cases){
-const cpf = extractCPF(c.resumo);
-const email = extractEmail(c.resumo);
-
-// chave canônica da pessoa
-const personId = cpf || email;
-if (!personId) continue;
-
-// mapa auxiliar para unir cpf + email
-let record = map.get(personId);
-
-// se ainda não existe, cria
-if (!record) {
-  record = {
-    primaryId: personId,
-    cpf: cpf || null,
-    email: email || null,
-    cases: []
-  };
-  map.set(personId, record);
-}
-
-// associa CPF e email ao mesmo registro
-if (cpf && !record.cpf) record.cpf = cpf;
-if (email && !record.email) record.email = email;
-
-record.cases.push(c);
-;const ex=map.get(id);if(ex)ex.cases.push(c);else map.set(id,{type:cpf?'cpf':'email',cases:[c]})}
+  for(const c of cases){const cpf=extractCPF(c.resumo);const email=extractEmail(c.resumo);const id=cpf||email;if(!id)continue;const ex=map.get(id);if(ex)ex.cases.push(c);else map.set(id,{type:cpf?'cpf':'email',cases:[c]})}
   const sixAgo=new Date();sixAgo.setMonth(sixAgo.getMonth()-6);const corr=[];
   for(const[id,data]of map){
     const open=data.cases.filter(c=>isOpen(c.status)).length;
