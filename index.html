@@ -255,7 +255,34 @@ function extractEmail(r){const m=r.match(/[\w.-]+@[\w.-]+\.\w+/);return m?m[0].t
 function formatCPF(c){return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4")}
 function buildPersonCorrelations(cases){
   const map=new Map();
-  for(const c of cases){const cpf=extractCPF(c.resumo);const email=extractEmail(c.resumo);const id=cpf||email;if(!id)continue;const ex=map.get(id);if(ex)ex.cases.push(c);else map.set(id,{type:cpf?'cpf':'email',cases:[c]})}
+  for(const c of cases){
+const cpf = extractCPF(c.resumo);
+const email = extractEmail(c.resumo);
+
+// chave canônica da pessoa
+const personId = cpf || email;
+if (!personId) continue;
+
+// mapa auxiliar para unir cpf + email
+let record = map.get(personId);
+
+// se ainda não existe, cria
+if (!record) {
+  record = {
+    primaryId: personId,
+    cpf: cpf || null,
+    email: email || null,
+    cases: []
+  };
+  map.set(personId, record);
+}
+
+// associa CPF e email ao mesmo registro
+if (cpf && !record.cpf) record.cpf = cpf;
+if (email && !record.email) record.email = email;
+
+record.cases.push(c);
+;const ex=map.get(id);if(ex)ex.cases.push(c);else map.set(id,{type:cpf?'cpf':'email',cases:[c]})}
   const sixAgo=new Date();sixAgo.setMonth(sixAgo.getMonth()-6);const corr=[];
   for(const[id,data]of map){
     const open=data.cases.filter(c=>isOpen(c.status)).length;
