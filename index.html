@@ -1110,7 +1110,7 @@ function renderPersonPanel(cases){
       <select class="filter-select" onchange="personSortBy=this.value;renderAll()"><option value="totalCases"${personSortBy==='totalCases'?' selected':''}>Total</option><option value="openCases"${personSortBy==='openCases'?' selected':''}>Abertos</option><option value="coafCases"${personSortBy==='coafCases'?' selected':''}>COAF</option></select>
     </div></div>`;
   h+=`<div class="person-summary"><div class="mini-kpi"><div class="val">${corr.length}</div><div class="lbl">Pessoas</div></div><div class="mini-kpi"><div class="val" style="color:var(--risk-high)">${reincidentes.length}</div><div class="lbl">Reincidentes</div></div><div class="mini-kpi"><div class="val" style="color:var(--coaf)">${totalWithCoaf}</div><div class="lbl">Com COAF</div></div><div class="mini-kpi"><div class="val" style="color:var(--risk-med)">${totalRecent}</div><div class="lbl">COAF &lt;6m</div></div></div>`;
-  h+=`<div class="table-wrap" style="max-height:360px;overflow-y:auto"><table class="data-table"><thead style="position:sticky;top:0;background:var(--card);z-index:5">发展
+  h+=`<div class="table-wrap" style="max-height:360px;overflow-y:auto"><table class="data-table"><thead style="position:sticky;top:0;background:var(--card);z-index:5">
     <th>CPF/Email</th><th>Total</th><th>Abertos</th><th>Encerrados</th><th>COAF</th><th>Último COAF</th><th>COAF &lt;6m</th><th>Risco</th><th>Primeiro Caso</th><th>Último Caso</th>
     </thead><tbody>`;
   
