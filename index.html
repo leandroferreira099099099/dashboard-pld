@@ -126,6 +126,12 @@ table.data-table{width:100%;font-size:0.75rem;border-collapse:collapse;table-lay
 .data-table td{padding:0.5rem 0.75rem;border-bottom:1px solid var(--muted);white-space:normal;word-break:break-word}
 .data-table tr:hover td{background:hsla(215,20%,92%,0.5)}
 .mono-id{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--link-color);white-space:nowrap}
+.data-table td.mono-id,
+.data-table td:last-child,
+.data-table td:nth-last-child(2),
+.data-table td:nth-last-child(3) {
+  white-space: nowrap !important;
+}
 
 @media (max-width: 1200px) {
   .data-table th, .data-table td {padding: 0.5rem 0.5rem;font-size: 0.7rem;}
