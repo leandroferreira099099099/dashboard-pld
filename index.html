@@ -1345,7 +1345,7 @@ function renderTable(cases){
   const safePage=Math.min(tablePage,Math.max(0,totalPages-1));
   const pageData=sorted.slice(safePage*PAGE_SIZE,(safePage+1)*PAGE_SIZE);
 
-  const cols=[{f:'id',l:'ID'},{f:'tipo',l:'Tipo'},{f:'resumo',l:'Resumo'},{f:'status',l:'Status'},{f:'responsavel',l:'Responsável'},{f:'risco',l:'Risco'},{f:'sla',l:'SLA'},{f:'data_transacao_pld',l:'Data Transação - PLD'},{f:'criado',l:'Criado'},{f:'resolvido',l:'Resolvido'}];
+  const cols=[{f:'id',l:'ID'},{f:'tipo',l:'Tipo'},{f:'resumo',l:'Resumo'},{f:'status',l:'Status'},{f:'responsavel',l:'Responsável'},{f:'risco',l:'Risco'},{f:'sla',l:'SLA'},{f:'data_transacao_pld',l:'Data Transação'},{f:'criado',l:'Criado'},{f:'resolvido',l:'Resolvido'}];
   const arrow=f=>tableSortField===f?(tableSortDir==='desc'?'▼':'▲'):'⇅';
 
   let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 class="chart-title" style="margin-bottom:0">Tabela Detalhada (${fmtNum(cases.length)} casos)</h3><div class="pagination">Pág. ${safePage+1} de ${totalPages} <button onclick="tablePage=Math.max(0,tablePage-1);renderAll()" ${safePage===0?'disabled':''}>‹</button><button onclick="tablePage=Math.min(${totalPages-1},tablePage+1);renderAll()" ${safePage>=totalPages-1?'disabled':''}>›</button></div></div>`;
