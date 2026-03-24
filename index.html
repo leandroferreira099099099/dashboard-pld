@@ -153,7 +153,7 @@ footer{border-top:1px solid var(--border);padding:1rem 0 2rem;text-align:center;
 .btn-mono:hover{color:var(--foreground)}
 
 [data-theme='dark'] body {background: var(--background);color: var(--foreground);}
-[data-theme='dark'] h1,[data-theme='dark'] h2,[data-theme='dark'] h3,[data-theme='dark'] h4,[data-theme='dark'] .chart-title {color: var(--foreground);}
+[data-theme='dark'] h1,[data-theme='dark'] h2,[data-theme='dark'] h3,[data-theme='dark'] .chart-title {color: var(--foreground);}
 [data-theme='dark'] .kpi-value {color: var(--foreground);}
 [data-theme='dark'] .kpi-label,[data-theme='dark'] .subtitle {color: var(--muted-fg);}
 [data-theme='dark'] table.data-table td {color: var(--foreground);}
@@ -285,7 +285,8 @@ const TIPO_COLORS = {
   'KYP / Monitoramento':'hsl(38,40%,58%)',
   'Manipulação de Resultados':'hsl(335,35%,64%)',
   'Jogo Responsável':'hsl(150,35%,58%)',
-  'Compliance':'hsl(260,35%,62%)'
+  'Compliance':'hsl(260,35%,62%)',
+  'Contas de passagem':'hsl(190,35%,58%)'
 };
 const RISCO_COLORS = {"Alto":"hsl(0,70%,60%)","Médio":"hsl(38,90%,62%)","Baixo":"hsl(142,45%,55%)"};
 const PAGE_SIZE = 25;
@@ -338,6 +339,8 @@ function getSlaDays(tipo){
   if(tipo==="Alerta PLD") return 30;
   if(tipo==="Manipulação de Resultados") return 15;
   if(tipo==="KYP / Background Check" || tipo==="KYP / Monitoramento" || tipo==="KYP Afiliados") return 2;
+  if(tipo==="Jogo Responsável") return 3;
+  if(tipo==="Contas de passagem") return 30;
   return 30
 }
 
@@ -356,7 +359,7 @@ function getSlaRemainingDays(c){
   
   if (isKYP) {
     const diasDecorridos = getDiasUteisDecorridos(ref);
-    const diasUteisSLA = 2;
+    const diasUteisSLA = getSlaDays(c.tipo);
     return diasUteisSLA - diasDecorridos;
   } else {
     const days = getSlaDays(c.tipo);
@@ -365,12 +368,15 @@ function getSlaRemainingDays(c){
     refDate.setHours(0, 0, 0, 0);
     hoje.setHours(0, 0, 0, 0);
     
-    const start = new Date(refDate);
-    start.setDate(start.getDate() + 1);
-    const elapsed = Math.floor((hoje - start) / (1000 * 60 * 60 * 24));
+    // Calcula data de vencimento: criado + dias - 1 (para alinhar com regra do Jira)
+    const dataVencimento = new Date(refDate);
+    dataVencimento.setDate(dataVencimento.getDate() + days - 1);
     
-    if (elapsed < 0) return days;
-    return days - elapsed;
+    // Calcula dias restantes
+    const diffTime = dataVencimento - hoje;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
   }
 }
 
@@ -401,7 +407,7 @@ function getDataVencimento(c) {
   refDate.setHours(0, 0, 0, 0);
   
   if (isKYP) {
-    const diasUteisSLA = 2;
+    const diasUteisSLA = getSlaDays(c.tipo);
     let dataAtual = getProximoDiaUtil(refDate);
     let diasUteisContados = 1;
     while (diasUteisContados < diasUteisSLA) {
@@ -412,7 +418,8 @@ function getDataVencimento(c) {
   } else {
     const days = getSlaDays(c.tipo);
     const dataVencimento = new Date(refDate);
-    dataVencimento.setDate(dataVencimento.getDate() + days + 1);
+    // Criado + dias - 1 (para alinhar com regra do Jira)
+    dataVencimento.setDate(dataVencimento.getDate() + days - 1);
     return dataVencimento;
   }
 }
@@ -549,6 +556,7 @@ function normTipo(raw){
   if(/respons[aá]vel/i.test(s))return"Jogo Responsável";
   if(/compliance/i.test(s))return"Compliance";
   if(/afiliados/i.test(s))return"KYP Afiliados";
+  if(/passagem/i.test(s))return"Contas de passagem";
   return s||"KYP Afiliados";
 }
 
@@ -730,7 +738,7 @@ function getSlaAlerts(cases){
       alerts.expired.push({...c, remainingDays: remaining});
     } else if(remaining === 0){
       alerts.today.push({...c, remainingDays: remaining});
-    } else if(remaining >= 2 && remaining <= 5){
+    } else if(remaining >= 1 && remaining <= 5){  // ALTERADO: de 2-5 para 1-5
       alerts.soon.push({...c, remainingDays: remaining});
     }
   });
@@ -802,7 +810,7 @@ function renderSlaAlerts(cases){
     <div class="sla-alert-card">
       <div class="sla-alert-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span>Próximos Dias (2-5)</span>
+        <span>Próximos Dias (1-5)</span>
         <span class="badge badge-risk-low">${alerts.soon.length}</span>
       </div>
       <div class="sla-alert-list">
@@ -975,9 +983,9 @@ function renderFilters(){
           <option value="">Todos os responsáveis</option>
           ${resps.map(r=>`<option${filters.responsavel===r?' selected':''}>${r}</option>`).join('')}
         </select>`;
-  const statusOpts = `${hasOpen?`<option value="open"${filters.status==='open'?' selected':''}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Abertos</option>`:''}
-                      ${hasClosed?`<option value="closed"${filters.status==='closed'?' selected':''}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle"><polyline points="20 6 9 17 4 12"/></svg>Concluídos</option>`:''}
-                      ${hasCoaf?`<option value="coaf"${filters.status==='coaf'?' selected':''}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Comunicados</option>`:''}
+  const statusOpts = `${hasOpen?`<option value="open"${filters.status==='open'?' selected':''}>Abertos</option>`:''}
+                      ${hasClosed?`<option value="closed"${filters.status==='closed'?' selected':''}>Concluídos</option>`:''}
+                      ${hasCoaf?`<option value="coaf"${filters.status==='coaf'?' selected':''}>Comunicados</option>`:''}
                       ${Array.from(statusesSet).sort().map(s=>`<option value="${s}"${filters.status===s?' selected':''}>${s}</option>`).join('')}`;
   h += `<select class="filter-select" onchange="filters.status=this.value;renderAll()">
           <option value="">Todos os status</option>
@@ -1120,16 +1128,16 @@ function renderPersonPanel(cases){
     const isExpanded = expandedPerson === p.identifier;
     
     h+=`<tr style="cursor:pointer" onclick="expandedPerson=expandedPerson==='${p.identifier}'?null:'${p.identifier}';renderAll()">
-      <td class="mono-id">${displayId}   </td>
-      <td style="font-weight:700">${p.totalCases}   </td>
-      <td><span class="badge badge-status-open">${p.openCases}</span>   </td>
-      <td><span class="badge badge-status-done">${p.closedCases}</span>   </td>
-      <td>${p.coafCases>0?`<span class="badge badge-coaf">${p.coafCases}</span>`:'—'}   </td>
-      <td>${fmtDate(p.lastCoafDate)}   </td>
-      <td>${p.coafCases>0?(p.coafInLast6Months?'<span class="badge badge-risk-high">⚠ Sim</span>':'<span class="badge badge-risk-low">Não</span>'):'—'}   </td>
-      <td><span class="badge ${rClass}">${p.riskLevel}</span>   </td>
-      <td>${fmtDate(p.firstCaseDate)}   </td>
-      <td>${fmtDate(p.lastCaseDate)}   </td>
+      <td class="mono-id">${displayId}</td>
+      <td style="font-weight:700">${p.totalCases}</td>
+      <td><span class="badge badge-status-open">${p.openCases}</span></td>
+      <td><span class="badge badge-status-done">${p.closedCases}</span></td>
+      <td>${p.coafCases>0?`<span class="badge badge-coaf">${p.coafCases}</span>`:'—'}</td>
+      <td>${fmtDate(p.lastCoafDate)}</td>
+      <td>${p.coafCases>0?(p.coafInLast6Months?'<span class="badge badge-risk-high">⚠ Sim</span>':'<span class="badge badge-risk-low">Não</span>'):'—'}</td>
+      <td><span class="badge ${rClass}">${p.riskLevel}</span></td>
+      <td>${fmtDate(p.firstCaseDate)}</td>
+      <td>${fmtDate(p.lastCaseDate)}</td>
       </tr>`;
     
     if(isExpanded){
@@ -1153,7 +1161,7 @@ function renderPersonPanel(cases){
         </div>`;
       });
       
-      h+=`</div></div>   </td>  </tr>`;
+      h+=`</div></div></td></tr>`;
     }
   });
   
