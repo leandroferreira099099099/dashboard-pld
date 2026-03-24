@@ -33,7 +33,12 @@
   --btn-clear-all-fg: hsl(215, 50%, 28%);
   --btn-clear-dates-bg: hsl(26, 100%, 94%);
   --btn-clear-dates-fg: hsl(26, 70%, 30%);
-  --btn-hover-shadow: 0 1px 2px rgba(0,0,0,.05);}
+  --btn-hover-shadow: 0 1px 2px rgba(0,0,0,.05);
+  --btn-done-bg: hsl(142, 45%, 45%);
+  --btn-done-hover: hsl(142, 45%, 35%);
+  --btn-undone-bg: hsl(0, 70%, 55%);
+  --btn-undone-hover: hsl(0, 70%, 45%);
+}
 body{font-family:'Inter',sans-serif;background:var(--background);color:var(--foreground);-webkit-font-smoothing:antialiased}
 .container{max-width:1400px;margin:0 auto;padding:0 1rem}
 header{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
@@ -77,7 +82,8 @@ main{padding:1.5rem 0}main>*+*{margin-top:1.5rem}
 .chart-title{font-size:0.875rem;font-weight:600;margin-bottom:1rem}
 
 /* SLA Alert Panel */
-.sla-alerts-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem}
+.sla-alerts-panel{display:flex;flex-direction:column;gap:1rem;margin-bottom:1rem}
+.sla-alerts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
 .sla-alert-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;overflow:hidden}
 .sla-alert-title{font-size:0.875rem;font-weight:700;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:0.5rem}
 .sla-alert-title svg{width:18px;height:18px;stroke-width:1.8}
@@ -86,17 +92,25 @@ main{padding:1.5rem 0}main>*+*{margin-top:1.5rem}
 .sla-alert-item:hover{background:var(--muted);border-radius:6px}
 .sla-critical{background:hsla(0,78%,47%,0.1);border-left:3px solid var(--risk-high)}
 .sla-warning{background:hsla(38,95%,50%,0.1);border-left:3px solid var(--risk-med)}
+.sla-done-item{opacity:0.7;background:var(--muted);border-left:3px solid var(--status-done)}
 .empty-message{text-align:center;color:var(--muted-fg);padding:1rem;font-style:italic}
-.badge-sla-days{font-size:0.65rem;padding:2px 6px;border-radius:12px;background:var(--muted);color:var(--muted-fg);cursor:help}
+.badge-sla-days{font-size:0.65rem;padding:2px 6px;border-radius:12px;background:var(--muted);color:var(--muted-fg);cursor:help;white-space:nowrap}
 .badge-sla-critical{background:var(--risk-high);color:white}
 .badge-sla-warning{background:var(--risk-med);color:white}
+.btn-done{background:var(--btn-done-bg);color:white;border:none;border-radius:4px;padding:4px 8px;font-size:0.65rem;cursor:pointer;transition:all 0.2s}
+.btn-done:hover{background:var(--btn-done-hover);transform:scale(1.02)}
+.btn-undone{background:var(--btn-undone-bg);color:white;border:none;border-radius:4px;padding:4px 8px;font-size:0.65rem;cursor:pointer;transition:all 0.2s}
+.btn-undone:hover{background:var(--btn-undone-hover);transform:scale(1.02)}
+.done-section{margin-top:0.5rem;border-top:2px dashed var(--border);padding-top:0.5rem}
+.done-section .sla-alert-title{color:var(--status-done)}
+.completed-badge{background:var(--status-done);color:white;padding:2px 6px;border-radius:12px;font-size:0.65rem}
 
 @media (max-width: 768px){
-  .sla-alerts-panel{grid-template-columns:1fr}
+  .sla-alerts-row{grid-template-columns:1fr}
 }
 
 /* Badges */
-.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:9999px;font-size:0.75rem;font-weight:600;cursor:help}
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:9999px;font-size:0.75rem;font-weight:600;cursor:help;white-space:nowrap}
 .badge-risk-high{background:var(--risk-high-bg);color:var(--risk-high)}
 .badge-risk-med{background:var(--risk-med-bg);color:var(--risk-med)}
 .badge-risk-low{background:var(--risk-low-bg);color:var(--risk-low)}
@@ -146,7 +160,11 @@ footer{border-top:1px solid var(--border);padding:1rem 0 2rem;text-align:center;
   --btn-clear-all-fg: hsl(215, 80%, 85%);
   --btn-clear-dates-bg: hsl(26, 35%, 24%);
   --btn-clear-dates-fg: hsl(26, 85%, 85%);
-  --btn-hover-shadow: 0 1px 2px rgba(0,0,0,.35);}
+  --btn-hover-shadow: 0 1px 2px rgba(0,0,0,.35);
+  --btn-done-bg: hsl(142, 35%, 35%);
+  --btn-done-hover: hsl(142, 35%, 45%);
+  --btn-undone-bg: hsl(0, 60%, 45%);
+  --btn-undone-hover: hsl(0, 60%, 55%);}
 [data-theme='dark'] .expanded-cases { background: var(--card); }
 
 .btn-mono{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted-fg);cursor:pointer}
@@ -291,12 +309,51 @@ const TIPO_COLORS = {
 const RISCO_COLORS = {"Alto":"hsl(0,70%,60%)","Médio":"hsl(38,90%,62%)","Baixo":"hsl(142,45%,55%)"};
 const PAGE_SIZE = 25;
 const JIRA_BASE_URL = "https://estrela-bet.atlassian.net/browse/";
+const STORAGE_KEY = "sla_completed_items";
 
-function isOpen(s){return OPEN_STATUSES.includes(s)}
-function isCoaf(s){return COAF_STATUSES.includes(s)}
+// ==================== STORAGE FUNCTIONS ====================
+let completedItems = new Set();
+
+function loadCompletedItems() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      const data = JSON.parse(stored);
+      completedItems = new Set(data);
+    } catch(e) {}
+  }
+}
+
+function saveCompletedItems() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...completedItems]));
+}
+
+function markAsDone(caseId) {
+  completedItems.add(caseId);
+  saveCompletedItems();
+  renderAll();
+}
+
+function markAsUndone(caseId) {
+  completedItems.delete(caseId);
+  saveCompletedItems();
+  renderAll();
+}
+
+function isCompleted(caseId) {
+  return completedItems.has(caseId);
+}
+
+function clearCompletedItems() {
+  completedItems.clear();
+  saveCompletedItems();
+  renderAll();
+}
 
 // ==================== FUNÇÕES DE SLA ====================
 
+function isOpen(s){return OPEN_STATUSES.includes(s)}
+function isCoaf(s){return COAF_STATUSES.includes(s)}
 function isDiaUtil(date) {
   const dia = date.getDay();
   return dia !== 0 && dia !== 6;
@@ -368,11 +425,9 @@ function getSlaRemainingDays(c){
     refDate.setHours(0, 0, 0, 0);
     hoje.setHours(0, 0, 0, 0);
     
-    // Calcula data de vencimento: criado + dias - 1 (para alinhar com regra do Jira)
     const dataVencimento = new Date(refDate);
     dataVencimento.setDate(dataVencimento.getDate() + days - 1);
     
-    // Calcula dias restantes
     const diffTime = dataVencimento - hoje;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
@@ -418,7 +473,6 @@ function getDataVencimento(c) {
   } else {
     const days = getSlaDays(c.tipo);
     const dataVencimento = new Date(refDate);
-    // Criado + dias - 1 (para alinhar com regra do Jira)
     dataVencimento.setDate(dataVencimento.getDate() + days - 1);
     return dataVencimento;
   }
@@ -731,6 +785,8 @@ function getSlaAlerts(cases){
   
   cases.forEach(c => {
     if(!isOpen(c.status)) return;
+    if(isCompleted(c.id)) return; // Pular itens já marcados como concluídos
+    
     const remaining = getSlaRemainingDays(c);
     if(remaining === null) return;
     
@@ -738,7 +794,7 @@ function getSlaAlerts(cases){
       alerts.expired.push({...c, remainingDays: remaining});
     } else if(remaining === 0){
       alerts.today.push({...c, remainingDays: remaining});
-    } else if(remaining >= 1 && remaining <= 5){  // ALTERADO: de 2-5 para 1-5
+    } else if(remaining >= 1 && remaining <= 5){
       alerts.soon.push({...c, remainingDays: remaining});
     }
   });
@@ -750,12 +806,17 @@ function getSlaAlerts(cases){
   return alerts;
 }
 
+function getCompletedCases(cases) {
+  return cases.filter(c => isCompleted(c.id) && isOpen(c.status));
+}
+
 function renderSlaAlerts(cases){
   const alerts = getSlaAlerts(cases);
+  const completedCases = getCompletedCases(cases);
   const panel = document.getElementById('slaAlertsPanel');
   if(!panel) return;
   
-  const formatAlertItem = (c) => {
+  const formatAlertItem = (c, showUndoneButton = true) => {
     const rBadge = c.risco === 'Alto' ? 'badge-risk-high' : c.risco === 'Médio' ? 'badge-risk-med' : 'badge-risk-low';
     const isKYP = c.tipo === "KYP / Background Check" || c.tipo === "KYP / Monitoramento" || c.tipo === "KYP Afiliados";
     const remainingClass = c.remainingDays < 0 ? 'badge-sla-critical' : (c.remainingDays <= 2 ? 'badge-sla-warning' : '');
@@ -772,6 +833,10 @@ function renderSlaAlerts(cases){
       remainingText = `${c.remainingDays} dia(s) ${isKYP ? 'útil(is)' : ''} restante(s)`;
     }
     
+    const buttonHtml = showUndoneButton 
+      ? `<button class="btn-done" onclick="markAsDone('${c.id}')" title="Marcar como concluído temporariamente">✓ Feito</button>`
+      : `<button class="btn-undone" onclick="markAsUndone('${c.id}')" title="Desfazer conclusão">↺ Desfazer</button>`;
+    
     return `
       <div class="sla-alert-item ${c.remainingDays < 0 ? 'sla-critical' : (c.remainingDays <= 2 ? 'sla-warning' : '')}">
         <div style="flex:1; min-width:0">
@@ -781,12 +846,36 @@ function renderSlaAlerts(cases){
         <div style="text-align:right">
           <span class="badge ${rBadge}" style="font-size:0.65rem">${c.risco}</span>
           <span class="badge-sla-days ${remainingClass}" style="margin-left:6px" title="${tooltip}">${remainingText}</span>
+          ${buttonHtml}
         </div>
       </div>
     `;
   };
   
-  panel.innerHTML = `
+  const formatCompletedItem = (c) => {
+    const rBadge = c.risco === 'Alto' ? 'badge-risk-high' : c.risco === 'Médio' ? 'badge-risk-med' : 'badge-risk-low';
+    const isKYP = c.tipo === "KYP / Background Check" || c.tipo === "KYP / Monitoramento" || c.tipo === "KYP Afiliados";
+    const remaining = getSlaRemainingDays(c);
+    const remainingText = remaining !== null ? `${Math.abs(remaining)} dia(s) ${isKYP ? 'útil(is)' : ''} ${remaining < 0 ? 'atrasado' : 'restante(s)'}` : '';
+    
+    return `
+      <div class="sla-alert-item sla-done-item">
+        <div style="flex:1; min-width:0">
+          <a href="${JIRA_BASE_URL}${c.id}" target="_blank" class="mono-id" style="font-size:11px">${c.id}</a>
+          <div style="font-size:0.7rem; color:var(--muted-fg); margin-top:2px">${c.responsavel || 'Sem responsável'} | ${c.tipo}</div>
+        </div>
+        <div style="text-align:right">
+          <span class="badge ${rBadge}" style="font-size:0.65rem">${c.risco}</span>
+          <span class="completed-badge" style="margin-left:6px">✓ Concluído</span>
+          <button class="btn-undone" onclick="markAsUndone('${c.id}')" style="margin-left:6px" title="Desfazer conclusão">↺ Desfazer</button>
+        </div>
+      </div>
+    `;
+  };
+  
+  let html = `<div class="sla-alerts-row">`;
+  
+  html += `
     <div class="sla-alert-card">
       <div class="sla-alert-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -794,7 +883,7 @@ function renderSlaAlerts(cases){
         <span class="badge badge-risk-high">${alerts.expired.length}</span>
       </div>
       <div class="sla-alert-list">
-        ${alerts.expired.length === 0 ? '<div class="empty-message">Nenhum caso vencido</div>' : alerts.expired.map(formatAlertItem).join('')}
+        ${alerts.expired.length === 0 ? '<div class="empty-message">Nenhum caso vencido</div>' : alerts.expired.map(c => formatAlertItem(c)).join('')}
       </div>
     </div>
     <div class="sla-alert-card">
@@ -804,7 +893,7 @@ function renderSlaAlerts(cases){
         <span class="badge badge-risk-med">${alerts.today.length}</span>
       </div>
       <div class="sla-alert-list">
-        ${alerts.today.length === 0 ? '<div class="empty-message">Nenhum caso vence hoje</div>' : alerts.today.map(formatAlertItem).join('')}
+        ${alerts.today.length === 0 ? '<div class="empty-message">Nenhum caso vence hoje</div>' : alerts.today.map(c => formatAlertItem(c)).join('')}
       </div>
     </div>
     <div class="sla-alert-card">
@@ -814,10 +903,32 @@ function renderSlaAlerts(cases){
         <span class="badge badge-risk-low">${alerts.soon.length}</span>
       </div>
       <div class="sla-alert-list">
-        ${alerts.soon.length === 0 ? '<div class="empty-message">Nenhum caso vencendo nos próximos dias</div>' : alerts.soon.map(formatAlertItem).join('')}
+        ${alerts.soon.length === 0 ? '<div class="empty-message">Nenhum caso vencendo nos próximos dias</div>' : alerts.soon.map(c => formatAlertItem(c)).join('')}
       </div>
     </div>
   `;
+  
+  html += `</div>`;
+  
+  if (completedCases.length > 0) {
+    html += `
+      <div class="done-section">
+        <div class="sla-alert-card">
+          <div class="sla-alert-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Concluídos Temporariamente</span>
+            <span class="completed-badge">${completedCases.length}</span>
+            <button class="btn-undone" style="margin-left:auto; padding:2px 8px" onclick="clearCompletedItems()">Limpar todos</button>
+          </div>
+          <div class="sla-alert-list">
+            ${completedCases.map(c => formatCompletedItem(c)).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  panel.innerHTML = html;
 }
 
 // ==================== STATE ====================
@@ -838,12 +949,17 @@ Chart.defaults.plugins.datalabels = {
 };
 
 // ==================== INIT ====================
+loadCompletedItems();
 document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 document.getElementById('uploadZone').addEventListener('click',()=>document.getElementById('fileInput').click());
 document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFile(f);e.target.value=''});
 
 function handleDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f)}
 function loadFile(file){
+  // Ao carregar nova planilha, limpar os itens concluídos (pois os IDs podem ser diferentes)
+  completedItems.clear();
+  saveCompletedItems();
+  
   const reader=new FileReader();
   reader.onload=ev=>{
     const data=new Uint8Array(ev.target.result);
@@ -903,7 +1019,7 @@ function renderAll(){
   renderTable(filtered);
   document.getElementById('filtersSection').style.display='flex';
   document.getElementById('dateFilters').style.display='flex';
-  document.getElementById('slaAlertsPanel').style.display='grid';
+  document.getElementById('slaAlertsPanel').style.display='block';
   document.getElementById('personPanel').style.display='block';
   document.getElementById('tablePanel').style.display='block';
   attachKpiCardGlow();
@@ -1138,7 +1254,7 @@ function renderPersonPanel(cases){
       <td><span class="badge ${rClass}">${p.riskLevel}</span></td>
       <td>${fmtDate(p.firstCaseDate)}</td>
       <td>${fmtDate(p.lastCaseDate)}</td>
-      </tr>`;
+     </tr>`;
     
     if(isExpanded){
       h+=`<tr class="expanded-row">
@@ -1221,7 +1337,7 @@ function renderTable(cases){
       <td>${fmtDate(c.data_transacao_pld)}</td>
       <td>${fmtDate(c.criado)}</td>
       <td>${fmtDate(c.resolvido)}</td>
-    </tr>`;
+     </tr>`;
   });
   h+=`</tbody></table></div>`;
   panel.innerHTML=h;
