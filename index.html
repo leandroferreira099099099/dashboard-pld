@@ -197,15 +197,15 @@ a:hover{color:var(--link-hover)}
   <div id="filtersSection" class="filters" style="display:none"></div>
   <div id="dateFilters" class="filters" style="display:none"></div>
   <div class="tabs-container">
-    <button class="tab-btn active" data-tab="operacional"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg><span>Operacional</span></button>
-    <button class="tab-btn" data-tab="graficos"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2M7 10l3-3 3 3 4-4"/><path d="M17 10V4h-6"/></svg><span>Gráficos</span></button>
-  </div>
-  <div id="tab-operacional" class="tab-content active">
+    <button class="tab-btn active" data-tab="operacional"><span>Operacional</span></button>
+    <button class="tab-btn" data-tab="graficos"><span>Gráficos</span></button>
+</div>
+<div id="tab-operacional" class="tab-content active">
     <div id="kpiGrid" class="kpi-grid"></div>
     <div id="slaAlertsPanel" class="sla-alerts-panel" style="display:none"></div>
-    <div id="personPanel" class="chart-card" style="display:none"></div>
+    <div id="personPanel" class="chart-card" style="display:none; margin-bottom: 2rem;"></div>
     <div id="tablePanel" class="chart-card" style="display:none"></div>
-  </div>
+</div>
   <div id="tab-graficos" class="tab-content">
     <div id="chartsGrid" class="charts-grid"></div>
   </div>
@@ -881,7 +881,7 @@ let personSearch='';
 let chartInstances=[];
 
 Chart.register(ChartDataLabels);
-Chart.defaults.plugins.legend = { display: false };
+
 Chart.defaults.plugins.datalabels = {
   color: '#334155', anchor: 'center', align: 'center', font: { size: 13, weight: '600' }, formatter: (v) => v
 };
@@ -1118,15 +1118,15 @@ function renderCharts(cases){
   makeChart('chTipo',{type:'bar',data:{labels:tipoLabels,datasets:[{data:tipoLabels.map(t=>tipoCount[t]),backgroundColor:tipoLabels.map(t=>TIPO_COLORS[t]||'#94a3b8')}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:10}}}}}});
 
   const rLabels=Object.keys(riscoCount);
-  makeChart('chRisco',{type:'bar',data:{labels:rLabels,datasets:[{data:rLabels.map(r=>riscoCount[r]),backgroundColor:rLabels.map(r=>RISCO_COLORS[r]||'#94a3b8')}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+makeChart('chRisco',{type:'bar',data:{labels:rLabels,datasets:[{data:rLabels.map(r=>riscoCount[r]),backgroundColor:rLabels.map(r=>RISCO_COLORS[r]||'#94a3b8')}]},options:{plugins:{legend:{display:false}}}});
 
-  makeChart('chTimeline',{type:'line',data:{labels:timeline.map(t=>t.month),datasets:[{label:'Criados',data:timeline.map(t=>t.criados),borderColor:'hsl(217,60%,62%)',backgroundColor:'hsla(217,60%,62%,0.15)',fill:true,tension:0.3},{label:'Resolvidos',data:timeline.map(t=>t.resolvidos),borderColor:'hsl(142,45%,55%)',backgroundColor:'hsla(142,45%,55%,0.14)',fill:true,tension:0.3},{label:'COAF',data:timeline.map(t=>t.coaf),borderColor:'hsl(263,45%,64%)',backgroundColor:'hsla(263,45%,64%,0.15)',fill:true,tension:0.3}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:11}}}}}});
+makeChart('chTimeline',{type:'line',data:{labels:timeline.map(t=>t.month),datasets:[{label:'Criados',data:timeline.map(t=>t.criados),borderColor:'hsl(217,60%,62%)',backgroundColor:'hsla(217,60%,62%,0.15)',fill:true,tension:0.3},{label:'Resolvidos',data:timeline.map(t=>t.resolvidos),borderColor:'hsl(142,45%,55%)',backgroundColor:'hsla(142,45%,55%,0.14)',fill:true,tension:0.3},{label:'COAF',data:timeline.map(t=>t.coaf),borderColor:'hsl(263,45%,64%)',backgroundColor:'hsla(263,45%,64%,0.15)',fill:true,tension:0.3}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:11}}}}}});
 
   makeChart('chWorkload',{type:'bar',data:{labels:wlSorted.map(w=>w[0].split(' ').slice(0,2).join(' ')),datasets:[{data:wlSorted.map(w=>w[1]),backgroundColor:'hsla(215,35%,62%,0.60)'}]},options:{plugins:{legend:{display:false},datalabels:{display:true}},scales:{x:{ticks:{font:{size:9},maxRotation:20}},y:{ticks:{font:{size:11}}}}}});
 
-  makeChart('chSla',{type:'bar',data:{labels:['Estourado','Em Risco','No Prazo'],datasets:[{data:[breached,warning,ok],backgroundColor:['hsl(0,70%,60%)','hsl(38,90%,62%)','hsl(142,45%,55%)']}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+makeChart('chSla',{type:'bar',data:{labels:['Estourado','Em Risco','No Prazo'],datasets:[{data:[breached,warning,ok],backgroundColor:['hsl(0,70%,60%)','hsl(38,90%,62%)','hsl(142,45%,55%)']}]},options:{plugins:{legend:{display:false}}}});
 
-  makeChart('chStatus',{type:'bar',data:{labels:['Abertos','COAF','Concluídos'],datasets:[{data:[statusD.open,statusD.coaf,statusD.closed],backgroundColor:['hsl(217,60%,62%)','hsl(263,45%,64%)','hsl(142,45%,55%)']}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+  makeChart('chStatus',{type:'bar',data:{labels:['Abertos','COAF','Concluídos'],datasets:[{data:[statusD.open,statusD.coaf,statusD.closed],backgroundColor:['hsl(217,60%,62%)','hsl(263,45%,64%)','hsl(142,45%,55%)']}]},options:{plugins:{legend:{display:false}}}});
 
   makeChart('chRes',{type:'line',data:{labels:resTrend.map(r=>r.month),datasets:[{label:'Dias',data:resTrend.map(r=>r.avg),borderColor:'hsl(263,45%,64%)',backgroundColor:'hsl(263,45%,64%)',pointRadius:3,tension:0.3}]},options:{plugins:{legend:{display:false},datalabels:{display:true}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:11}}}}}});
 }
