@@ -105,6 +105,8 @@ main{padding:1.5rem 0}main>*+*{margin-top:1.5rem}
 .done-section{margin-top:0.5rem;border-top:2px dashed var(--border);padding-top:0.5rem}
 .done-section .sla-alert-title{color:var(--status-done)}
 .completed-badge{background:var(--status-done);color:white;padding:2px 6px;border-radius:12px;font-size:0.65rem}
+.help-tip{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;background:var(--muted);color:var(--muted-fg);font-size:0.72rem;font-weight:700;cursor:help;border:1px solid var(--border);line-height:1;vertical-align:middle}
+.help-tip:hover{background:var(--border);color:var(--foreground)}
 @media (max-width: 768px){.sla-alerts-row{grid-template-columns:1fr}}
 .badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:9999px;font-size:0.75rem;font-weight:600;cursor:help;white-space:nowrap}
 .badge-risk-high{background:var(--risk-high-bg);color:var(--risk-high)}
@@ -366,8 +368,8 @@ a:hover{color:var(--link-hover)}
   <div id="filtersSection" class="filters" style="display:none"></div>
   <div id="dateFilters" class="filters" style="display:none"></div>
   <div class="tabs-container">
-    <button class="tab-btn active" data-tab="operacional"><span>Operacional</span></button>
-    <button class="tab-btn" data-tab="graficos"><span>Gerencial</span></button>
+    <button class="tab-btn active" type="button" data-tab="operacional"><span>Operacional</span></button>
+    <button class="tab-btn" type="button" data-tab="graficos"><span>Gerencial</span></button>
 </div>
 <div id="tab-operacional" class="tab-content active">
     <div id="kpiGrid" class="kpi-grid"></div>
@@ -433,6 +435,9 @@ const JIRA_BASE_URL = "https://estrela-bet.atlassian.net/browse/";
 const STORAGE_KEY = "sla_completed_items";
 const STORAGE_DATA_KEY = "dashboard_cases_data";
 const STORAGE_TIMESTAMP_KEY = "dashboard_last_update";
+
+function hasChartLib(){ return typeof Chart !== 'undefined'; }
+function hasXlsxLib(){ return typeof XLSX !== 'undefined'; }
 
 // ==================== STORAGE ====================
 let completedItems = new Set();
@@ -516,6 +521,7 @@ function loadCasesFromStorage() {
       const data = JSON.parse(stored);
       if (data.cases && data.cases.length > 0) {
         allCases = data.cases;
+        allCases.forEach(c => { c.subtipo_pld = c.subtipo_pld || detectSubtipoPLD(c.resumo, c.tipo); });
         if (data.timestamp) {
           updateLastUpdateBanner(data.timestamp);
         } else {
@@ -836,6 +842,20 @@ function normRisco(raw) {
   if (s.includes("baixo") || s.includes("low")) return "Baixo";
   return "Baixo";
 }
+function detectSubtipoPLD(resumo, tipo){
+  if(tipo !== "Alerta PLD") return "";
+  const t = String(resumo || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  if ((t.includes("deposit") || t.includes("deposito") || t.includes("depositos")) && t.includes("50k") && t.includes("mes")) return "Depósitos 50k Mês";
+  if ((t.includes("deposit") || t.includes("deposito") || t.includes("depositos")) && t.includes("30k") && (t.includes("unit") || t.includes("unico") || t.includes("unidade"))) return "Depositos 30k unit";
+  if (t.includes("conta") && t.includes("passagem")) return "Contas de Passagem";
+  if (t.includes("pep") && ((t.includes("deposit") || t.includes("deposito") || t.includes("depositos")) || t.includes("20k"))) return "PEP Depósitos 20k";
+  if (t.includes("50k") && t.includes("mes")) return "Depósitos 50k Mês";
+  if (t.includes("30k") && (t.includes("unit") || t.includes("unico") || t.includes("unidade"))) return "Depositos 30k unit";
+  if (t.includes("passagem")) return "Contas de Passagem";
+  if (t.includes("pep") && t.includes("20k")) return "PEP Depósitos 20k";
+  return "";
+}
+
 function parseWorkbook(wb){
   const results=[];
   for(const name of wb.SheetNames){
@@ -877,6 +897,7 @@ function parseWorkbook(wb){
         resolvido:parseDate(row["Resolvido"]||row["Resolved"]),
         responsavel:row["Responsável"]?String(row["Responsável"]).trim():row["Assignee"]?String(row["Assignee"]).trim():null,
         status:String(row["Status"]||"").trim(), tipo, risco, data_transacao_pld:transPld,
+        subtipo_pld: detectSubtipoPLD(String(row["Resumo"]||row["Summary"]||"").trim(), tipo),
   emailP,
       });
     }
@@ -1238,6 +1259,7 @@ function updateComparisonCards(cases){
 let modalChart = null;
 
 function setupChartModal() {
+  if (!hasChartLib()) return () => {};
   const modal = document.getElementById('chartModal');
   const modalCanvas = document.getElementById('modalCanvas');
   const modalTitle = document.getElementById('modalTitle');
@@ -1358,7 +1380,7 @@ document.addEventListener('DOMContentLoaded', setupChartModal);
 
 // ==================== STATE ====================
 let allCases=[];
-let filters={tipo:'',risco:'',responsavel:'',status:'',sla:'',text:'',dateFrom:'',dateTo:'',transFrom:'',transTo:''};
+let filters={tipo:'',subtipoPLD:'',risco:'',responsavel:'',status:'',sla:'',text:'',dateFrom:'',dateTo:''};
 let tablePage=0;
 let tableSortField='criado';
 let tableSortDir='desc';
@@ -1367,11 +1389,13 @@ let personSortBy='totalCases';
 let personSearch='';
 let chartInstances=[];
 
-Chart.register(ChartDataLabels);
+if (hasChartLib() && typeof ChartDataLabels !== 'undefined') { Chart.register(ChartDataLabels); }
 
-Chart.defaults.plugins.datalabels = {
-  color: '#334155', anchor: 'center', align: 'center', font: { size: 13, weight: '600' }, formatter: (v) => v
-};
+if (hasChartLib()) {
+  Chart.defaults.plugins.datalabels = {
+    color: '#334155', anchor: 'center', align: 'center', font: { size: 13, weight: '600' }, formatter: (v) => v
+  };
+}
 
 // ==================== INIT ====================
 // Tentar carregar dados salvos primeiro
@@ -1382,10 +1406,9 @@ if (dataLoaded && allCases.length > 0) {
   const ago = new Date(now);
   ago.setMonth(ago.getMonth() - 3);
   filters = {
-    tipo:'', risco:'', responsavel:'', status:'', sla:'', text:'',
+    tipo:'', subtipoPLD:'', risco:'', responsavel:'', status:'', sla:'', text:'',
     dateFrom: ago.toISOString().slice(0,10),
-    dateTo: now.toISOString().slice(0,10),
-    transFrom:'', transTo:''
+    dateTo: now.toISOString().slice(0,10)
   };
   renderAll();
 } else {
@@ -1401,6 +1424,10 @@ document.getElementById('fileInput').addEventListener('change',e=>{const f=e.tar
 
 function handleDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f)}
 function loadFile(file){
+  if (!hasXlsxLib()) {
+    alert('A biblioteca de planilha não carregou. Recarregue a página e tente novamente.');
+    return;
+  }
   const reader=new FileReader();
   reader.onload=ev=>{
     const data=new Uint8Array(ev.target.result);
@@ -1409,7 +1436,7 @@ function loadFile(file){
     saveCasesToStorage();  // salva dados e timestamp
     loadCompletedItems();
     const now=new Date(),ago=new Date(now);ago.setMonth(ago.getMonth()-3);
-    filters={tipo:'',risco:'',responsavel:'',status:'',sla:'',text:'',dateFrom:ago.toISOString().slice(0,10),dateTo:now.toISOString().slice(0,10),transFrom:'',transTo:''};
+    filters={tipo:'',subtipoPLD:'',risco:'',responsavel:'',status:'',sla:'',text:'',dateFrom:ago.toISOString().slice(0,10),dateTo:now.toISOString().slice(0,10)};
     tablePage=0;
     renderAll();
   };
@@ -1417,26 +1444,29 @@ function loadFile(file){
 }
 
 // ==================== FILTER ====================
+function getCombinedDate(c){
+  return c.data_transacao_pld || c.criado || null;
+}
+
 function applyFilters(cases,f){
   return cases.filter(c=>{
     if(f.tipo&&c.tipo!==f.tipo)return false;
+    if(f.subtipoPLD&&c.subtipo_pld!==f.subtipoPLD)return false;
     if(f.risco&&c.risco!==f.risco)return false;
     if(f.responsavel&&c.responsavel!==f.responsavel)return false;
     if(f.status){const fs=f.status;if(fs==="open"||fs==="closed"||fs==="coaf"){if(getStatusCategory(c.status)!==fs)return false}else{if(c.status!==fs)return false}}
     if(f.sla&&getSlaStatus(c)!==f.sla)return false;
-    if(f.dateFrom&&c.criado&&new Date(c.criado)<new Date(f.dateFrom))return false;
-    if(f.dateTo&&c.criado){const e=new Date(f.dateTo);e.setHours(23,59,59,999);if(new Date(c.criado)>e)return false}
-    if((f.dateFrom||f.dateTo)&&!c.criado)return false;
-    if(f.transFrom&&c.data_transacao_pld&&new Date(c.data_transacao_pld)<new Date(f.transFrom))return false;
-    if(f.transTo&&c.data_transacao_pld){const e=new Date(f.transTo);e.setHours(23,59,59,999);if(new Date(c.data_transacao_pld)>e)return false}
-    if((f.transFrom||f.transTo)&&!c.data_transacao_pld)return false;
-    if(f.text){const t=f.text.toLowerCase();if(!(c.id||"").toLowerCase().includes(t)&&!(c.resumo||"").toLowerCase().includes(t)&&!(c.responsavel||"").toLowerCase().includes(t)&&!(c.status||"").toLowerCase().includes(t)&&!(c.tipo||"").toLowerCase().includes(t))return false}
+    const combinedDate = getCombinedDate(c);
+    if(f.dateFrom&&combinedDate&&new Date(combinedDate)<new Date(f.dateFrom))return false;
+    if(f.dateTo&&combinedDate){const e=new Date(f.dateTo);e.setHours(23,59,59,999);if(new Date(combinedDate)>e)return false}
+    if((f.dateFrom||f.dateTo)&&!combinedDate)return false;
+    if(f.text){const t=f.text.toLowerCase();if(!(c.id||"").toLowerCase().includes(t)&&!(c.resumo||"").toLowerCase().includes(t)&&!(c.responsavel||"").toLowerCase().includes(t)&&!(c.status||"").toLowerCase().includes(t)&&!(c.tipo||"").toLowerCase().includes(t)&&!(c.subtipo_pld||"").toLowerCase().includes(t))return false}
     return true;
   });
 }
 
 function getFacetSubset(){
-  const f = { ...filters, risco:'', responsavel:'', status:'', sla:'' };
+  const f = { ...filters, subtipoPLD:'', risco:'', responsavel:'', status:'', sla:'' };
   return applyFilters(allCases, f);
 }
 
@@ -1500,13 +1530,13 @@ function handleMouseLeave(e) {
 }
 
 function clearDateFilters(){
-  filters.dateFrom=''; filters.dateTo=''; filters.transFrom=''; filters.transTo='';
+  filters.dateFrom=''; filters.dateTo='';
   tablePage = 0;
   renderAll();
 }
 
 function clearOnlyFilters(){
-  filters.tipo=''; filters.risco=''; filters.responsavel=''; filters.status=''; filters.sla=''; filters.text='';
+  filters.tipo=''; filters.subtipoPLD=''; filters.risco=''; filters.responsavel=''; filters.status=''; filters.sla=''; filters.text='';
   tablePage = 0;
   expandedPerson = null;
   personSearch = '';
@@ -1525,6 +1555,7 @@ function renderFilters(){
   subset.forEach(c=>{ const s=getSlaStatus(c); if (s) slaCounts[s] = (slaCounts[s]||0)+1; });
   const slaPossible = Object.entries(slaCounts).filter(([k,v])=>v>0).map(([k])=>k);
 
+  if (filters.tipo && filters.tipo !== 'Alerta PLD') filters.subtipoPLD = '';
   if (filters.risco && !riscoSet.has(filters.risco)) filters.risco = '';
   if (filters.responsavel && !respsSet.has(filters.responsavel)) filters.responsavel = '';
   if (filters.status && !(['open','closed','coaf'].includes(filters.status) || statusesSet.has(filters.status))) filters.status = '';
@@ -1539,6 +1570,16 @@ function renderFilters(){
           <option value="">Todos os tipos</option>
           ${tipos.map(t=>`<option${filters.tipo===t?' selected':''}>${t}</option>`).join('')}
         </select>`;
+  const subtiposPLD = ['Depósitos 50k Mês','Depositos 30k unit','Contas de Passagem','PEP Depósitos 20k'];
+  const subtipoSet = new Set(subset.filter(c=>c.tipo==='Alerta PLD').map(c=>c.subtipo_pld).filter(Boolean));
+  const subtipoOptions = subtiposPLD.filter(s=>subtipoSet.has(s));
+  if (filters.subtipoPLD && !subtipoSet.has(filters.subtipoPLD)) filters.subtipoPLD = '';
+  if ((!filters.tipo || filters.tipo === 'Alerta PLD') && subtipoOptions.length) {
+    h += `<select class="filter-select" onchange="filters.subtipoPLD=this.value;renderAll()">
+            <option value="">Todos os subtipos PLD</option>
+            ${subtipoOptions.map(s=>`<option value="${s}"${filters.subtipoPLD===s?' selected':''}>${s}</option>`).join('')}
+          </select>`;
+  }
   h += `<select class="filter-select" onchange="filters.risco=this.value;renderAll()">
           <option value="">Todos os riscos</option>
           ${['Alto','Médio','Baixo'].filter(r=>riscoSet.has(r)).map(r=>`<option${filters.risco===r?' selected':''}>${r}</option>`).join('')}
@@ -1566,8 +1607,7 @@ function renderFilters(){
   h += `<button id="btnClearFilters" class="filter-input" style="height:36px;cursor:pointer;min-width:180px" onclick="clearOnlyFilters()">Limpar filtros</button>`;
   document.getElementById('filtersSection').innerHTML = h;
 
-  let d = `<span class="subtitle">Criação de:</span><input type="date" class="filter-input" style="width:140px" value="${filters.dateFrom}" onchange="filters.dateFrom=this.value;renderAll()"><span class="subtitle">até:</span><input type="date" class="filter-input" style="width:140px" value="${filters.dateTo}" onchange="filters.dateTo=this.value;renderAll()">`;
-  d += `<span class="subtitle" style="margin-left:0.5rem">Trans. PLD de:</span><input type="date" class="filter-input" style="width:140px" value="${filters.transFrom}" onchange="filters.transFrom=this.value;renderAll()"><span class="subtitle">até:</span><input type="date" class="filter-input" style="width:140px" value="${filters.transTo}" onchange="filters.transTo=this.value;renderAll()"> <button id="btnClearDates" class="filter-input" style="height:36px;cursor:pointer;margin-left:0.5rem;min-width:180px" onclick="clearDateFilters()">Limpar datas</button>`;
+  let d = `<span class="subtitle">Data Combinada (Transação+Criação)</span><span class="help-tip" title="Usa Data Transação PLD quando existir; senão, Data de Criação.">?</span><span class="subtitle">de:</span><input type="date" class="filter-input" style="width:140px" value="${filters.dateFrom}" onchange="filters.dateFrom=this.value;renderAll()"><span class="subtitle">até:</span><input type="date" class="filter-input" style="width:140px" value="${filters.dateTo}" onchange="filters.dateTo=this.value;renderAll()"><button id="btnClearDates" class="filter-input" style="height:36px;cursor:pointer;margin-left:0.5rem;min-width:220px" onclick="clearDateFilters()">Limpar datas</button>`;
   document.getElementById('dateFilters').innerHTML = d;
 }
 
@@ -1591,10 +1631,11 @@ function renderKPIs(cases){
   document.getElementById('kpiGrid').innerHTML=kpis.map(k=>`<div class="kpi-card"><div class="kpi-value" style="color:${k.color}">${k.v}</div><div class="kpi-label">${k.l}</div></div>`).join('');
 }
 
-function destroyCharts(){chartInstances.forEach(c=>c.destroy());chartInstances=[]}
+function destroyCharts(){chartInstances.forEach(c=>{ try{ c.destroy(); }catch(e){} });chartInstances=[]}
 function makeChart(canvasId,config){
+  if(!hasChartLib()) return null;
   const ctx=document.getElementById(canvasId);
-  if(!ctx)return;
+  if(!ctx)return null;
   const chart=new Chart(ctx,config);
   chartInstances.push(chart);
   return chart;
@@ -1602,9 +1643,14 @@ function makeChart(canvasId,config){
 
 function renderCharts(cases){
   destroyCharts();
+  if (!hasChartLib()) {
+    if (grid) grid.innerHTML = '<div class="chart-card"><h3 class="chart-title">Gráficos indisponíveis</h3><div style="color:var(--muted-fg);font-size:0.82rem;padding-top:0.35rem">A biblioteca de gráficos não carregou neste ambiente. Os dados e filtros continuam disponíveis.</div></div>';
+    return;
+  }
   const tipoCount={};cases.forEach(c=>tipoCount[c.tipo]=(tipoCount[c.tipo]||0)+1);
   const riscoCount={};cases.forEach(c=>riscoCount[c.risco]=(riscoCount[c.risco]||0)+1);
   const timeline=getTimeline(cases);
+  const cohortCases = cases;
   const workload={};cases.filter(c=>c.responsavel&&isOpen(c.status)).forEach(c=>workload[c.responsavel]=(workload[c.responsavel]||0)+1);
   const wlSorted=Object.entries(workload).sort((a,b)=>b[1]-a[1]).slice(0,10);
   let breached=0,warning=0,ok=0;
@@ -1616,12 +1662,14 @@ function renderCharts(cases){
   });
   const statusD={open:cases.filter(c=>isOpen(c.status)).length,coaf:cases.filter(c=>isCoaf(c.status)).length,closed:cases.filter(c=>!isOpen(c.status)&&!isCoaf(c.status)).length};
   const resTrend=getResTrend(cases);
+  const cohort=getResolutionCohort(cohortCases);
 
   const grid=document.getElementById('chartsGrid');
   grid.innerHTML=`
     <div class="chart-card"><h3 class="chart-title">Casos por Tipo</h3><canvas id="chTipo" height="80"></canvas></div>
     <div class="chart-card"><h3 class="chart-title">Distribuição de Risco</h3><canvas id="chRisco" height="80"></canvas></div>
     <div class="chart-card span-2"><h3 class="chart-title">Evolução Mensal de Casos</h3><canvas id="chTimeline" height="80"></canvas></div>
+    <div class="chart-card span-2"><h3 class="chart-title">Safra de Resolução — Total, Mesmo Mês e Mês Seguinte</h3><canvas id="chCohort" height="80"></canvas></div>
     <div class="chart-card"><h3 class="chart-title">Carga de Trabalho (Casos Abertos)</h3><canvas id="chWorkload" height="80"></canvas></div>
     <div class="chart-card"><h3 class="chart-title">Visão SLA — Casos Abertos</h3><canvas id="chSla" height="80"></canvas></div>
     <div class="chart-card"><h3 class="chart-title">Distribuição por Status</h3><canvas id="chStatus" height="80"></canvas></div>
@@ -1635,6 +1683,118 @@ function renderCharts(cases){
 makeChart('chRisco',{type:'bar',data:{labels:rLabels,datasets:[{data:rLabels.map(r=>riscoCount[r]),backgroundColor:rLabels.map(r=>RISCO_COLORS[r]||'#94a3b8')}]},options:{plugins:{legend:{display:false}}}});
 
 makeChart('chTimeline',{type:'line',data:{labels:timeline.map(t=>t.month),datasets:[{label:'Criados',data:timeline.map(t=>t.criados),borderColor:'hsl(217,60%,62%)',backgroundColor:'hsla(217,60%,62%,0.15)',fill:true,tension:0.3},{label:'Resolvidos',data:timeline.map(t=>t.resolvidos),borderColor:'hsl(142,45%,55%)',backgroundColor:'hsla(142,45%,55%,0.14)',fill:true,tension:0.3},{label:'COAF',data:timeline.map(t=>t.coaf),borderColor:'hsl(263,45%,64%)',backgroundColor:'hsla(263,45%,64%,0.15)',fill:true,tension:0.3}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:11}}}}}});
+
+if(cohort.length){
+makeChart('chCohort',{
+  type:'bar',
+  data:{
+    labels:cohort.map(t=>t.monthLabel),
+    datasets:[
+      {
+        label:'Resolvidos no mesmo mês',
+        data:cohort.map(t=>t.sameMonth),
+        backgroundColor:'hsl(142,45%,55%)',
+        stack:'cohort',
+        datalabels:{
+          color:'#ffffff',
+          backgroundColor:'hsl(142,45%,38%)',
+          borderRadius:6,
+          padding:{top:2,right:6,bottom:2,left:6},
+          font:{size:11,weight:'700'},
+          formatter:(v)=>v>0?v:'',
+          anchor:'center',
+          align:'center',
+          clamp:true
+        }
+      },
+      {
+        label:'Resolvidos no mês seguinte',
+        data:cohort.map(t=>t.nextMonth),
+        backgroundColor:'hsl(38,90%,62%)',
+        stack:'cohort',
+        datalabels:{
+          color:'#111827',
+          backgroundColor:'hsl(38,88%,48%)',
+          borderRadius:6,
+          padding:{top:2,right:6,bottom:2,left:6},
+          font:{size:11,weight:'700'},
+          formatter:(v)=>v>0?v:'',
+          anchor:'center',
+          align:'center',
+          clamp:true
+        }
+      },
+      {
+        label:'Resolvidos depois / em aberto',
+        data:cohort.map(t=>t.otherOrOpen),
+        backgroundColor:'hsla(215,20%,65%,0.85)',
+        stack:'cohort',
+        datalabels:{
+          color:'#ffffff',
+          backgroundColor:'hsl(215,18%,38%)',
+          borderRadius:6,
+          padding:{top:2,right:6,bottom:2,left:6},
+          font:{size:11,weight:'700'},
+          formatter:(v)=>v>0?v:'',
+          anchor:'center',
+          align:'center',
+          clamp:true
+        }
+      },
+      {
+        label:'Total da safra',
+        data:cohort.map(t=>t.total),
+        backgroundColor:'rgba(0,0,0,0)',
+        borderWidth:0,
+        stack:'totals',
+        datalabels:{
+          color:'#ffffff',
+          backgroundColor:'hsl(217,60%,42%)',
+          borderRadius:6,
+          padding:{top:2,right:6,bottom:2,left:6},
+          font:{size:11,weight:'700'},
+          formatter:(v)=>v>0?`Total ${v}`:'',
+          anchor:'end',
+          align:'end',
+          offset:4,
+          clip:false
+        }
+      }
+    ]
+  },
+  options:{
+    plugins:{
+      legend:{position:'bottom',labels:{font:{size:11}}},
+      tooltip:{
+        callbacks:{
+          afterBody(items){
+            const i = items[0]?.dataIndex ?? 0;
+            const row = cohort[i];
+            if(!row) return '';
+            return [
+              `Criados na safra: ${row.total}`,
+              `Resolvidos no mesmo mês: ${row.sameMonth}`,
+              `Resolvidos no mês seguinte: ${row.nextMonth}`,
+              `Resolvidos depois / em aberto: ${row.otherOrOpen}`,
+              'Referência: Data Combinada (Transação+Criação)'
+            ];
+          }
+        }
+      }
+    },
+    scales:{
+      x:{stacked:true,ticks:{font:{size:10}}},
+      y:{stacked:true,beginAtZero:true,ticks:{font:{size:11}}}
+    }
+  }
+});
+} else {
+  const cohortCanvas = document.getElementById('chCohort');
+  if (cohortCanvas) {
+    const card = cohortCanvas.closest('.chart-card');
+    if (card) card.innerHTML = '<h3 class="chart-title">Safra de Resolução — Total, Mesmo Mês e Mês Seguinte</h3><div style="color:var(--muted-fg);font-size:0.8rem;padding:1rem 0">Nenhum caso encontrado para o filtro específico da safra.</div>';
+  }
+}
 
   makeChart('chWorkload',{type:'bar',data:{labels:wlSorted.map(w=>w[0].split(' ').slice(0,2).join(' ')),datasets:[{data:wlSorted.map(w=>w[1]),backgroundColor:'hsla(215,35%,62%,0.60)'}]},options:{plugins:{legend:{display:false},datalabels:{display:true}},scales:{x:{ticks:{font:{size:9},maxRotation:20}},y:{ticks:{font:{size:11}}}}}});
 
@@ -1658,6 +1818,42 @@ function getResTrend(cases){
   const resolved=cases.filter(c=>c.criado&&c.resolvido);const m=new Map();
   resolved.forEach(c=>{const d=new Date(c.resolvido);const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const arr=m.get(k)||[];arr.push(Math.round((new Date(c.resolvido)-new Date(c.criado))/864e5));m.set(k,arr)});
   return[...m.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([month,days])=>({month,avg:Math.round(days.reduce((s,d)=>s+d,0)/days.length)}));
+}
+
+function formatMonthKeyLabel(monthKey){
+  const [year, month] = String(monthKey).split('-');
+  return `${month}/${year}`;
+}
+
+function getResolutionCohort(cases){
+  const m = new Map();
+  cases.forEach(c => {
+    const refDate = getCombinedDate(c);
+    if(!refDate) return;
+    const created = new Date(refDate);
+    if(isNaN(created)) return;
+    const createdKey = created.getFullYear() + '-' + String(created.getMonth()+1).padStart(2,'0');
+    const entry = m.get(createdKey) || { total:0, sameMonth:0, nextMonth:0, otherOrOpen:0 };
+    entry.total++;
+
+    if(c.resolvido){
+      const resolved = new Date(c.resolvido);
+      if(!isNaN(resolved)){
+        const diffMonths = (resolved.getFullYear() - created.getFullYear()) * 12 + (resolved.getMonth() - created.getMonth());
+        if(diffMonths === 0) entry.sameMonth++;
+        else if(diffMonths === 1) entry.nextMonth++;
+        else entry.otherOrOpen++;
+      } else {
+        entry.otherOrOpen++;
+      }
+    } else {
+      entry.otherOrOpen++;
+    }
+    m.set(createdKey, entry);
+  });
+  return [...m.entries()]
+    .sort(([a],[b]) => a.localeCompare(b))
+    .map(([month, d]) => ({ month, monthLabel: formatMonthKeyLabel(month), ...d }));
 }
 
 // ==================== RENDER PERSON PANEL (com todas as colunas ordenáveis) ====================
@@ -1943,7 +2139,16 @@ function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(content => content.classList.toggle('active', content.id === `tab-${tabId}`));
 }
 
-document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+function bindTabs(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.onclick = () => switchTab(btn.dataset.tab);
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bindTabs);
+} else {
+  bindTabs();
+}
 </script>
 </body>
 </html>
