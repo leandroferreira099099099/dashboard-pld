@@ -248,6 +248,97 @@ a:hover{color:var(--link-hover)}
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
+.modal-content {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#modalCanvas {
+  flex: 0 0 auto;
+}
+
+
+#modalDataBox {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+
+  max-height: 30vh;
+  overflow-y: auto;
+
+  background: var(--card);
+  color: var(--foreground);
+
+  box-shadow: 0 -10px 25px rgba(0,0,0,.3);
+  border-radius: 8px;
+  padding: .75rem;
+  z-index: 1001;
+}
+
+``
+.btn-clear-chart {
+  height: 28px;
+  padding: 0 10px;
+
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border-radius: 6px;
+  border: 1px solid var(--border);
+
+  background: var(--muted);
+  color: var(--muted-fg);
+
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+/* Botão limpar seleção (modal) */
+.btn-clear-chart {
+  height: 32px;
+  padding: 0 12px;
+  gap: 6px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+
+  background: transparent;
+  color: var(--muted-fg);
+
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-chart .icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.btn-clear-chart:hover {
+  background: var(--risk-high-bg);
+  color: var(--risk-high);
+  border-color: var(--risk-high);
+}
+``
+
+
 </style>
 </head>
 <body>
@@ -291,13 +382,37 @@ a:hover{color:var(--link-hover)}
   <footer>Desenvolvido por Leandro Ferreira (2026) — Uso interno</footer>
 </main>
 
+
 <!-- Modal para expansão de gráficos -->
 <div id="chartModal" class="chart-modal">
   <div class="modal-content">
-    <span class="modal-close">&times;</span>
+    <span class="modal-close">×</span>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;gap:.5rem">
+      <strong id="modalTitle"></strong>
+      <div style="display:flex;gap:.5rem">
+        <button id="btnExportChart" class="filter-input">Exportar PNG</button>
+        <button id="btnShowData" class="filter-input">Ver dados</button>
+
+
+<button id="btnClearChartFilter" class="btn-clear-chart" style="display:none">
+  <span class="icon">✕</span>
+  <span class="label">Limpar</span>
+</button>
+
+
+
+      </div>
+    </div>
+
     <canvas id="modalCanvas"></canvas>
+
+    <pre id="modalDataBox"
+      style="display:none;margin-top:.75rem;background:var(--muted);padding:.75rem;
+             border-radius:8px;font-size:.7rem;max-height:200px;overflow:auto"></pre>
   </div>
 </div>
+
 
 <script>
 // ==================== CONSTANTES ====================
@@ -436,7 +551,7 @@ function updateLastUpdateBanner(timestampISO) {
   
   if (isToday) {
     bannerDiv.className = 'update-banner';
-    bannerDiv.innerHTML = `📅 Última atualização: ${formattedDate} (hoje)`;
+    bannerDiv.innerHTML = `Última atualização: ${formattedDate} (hoje)`;
     bannerDiv.style.display = 'inline-flex';
   } else {
     bannerDiv.className = 'update-banner warning';
@@ -1117,66 +1232,129 @@ function updateComparisonCards(cases){
   }
 }
 
-// ==================== MODAL DE GRÁFICO EXPANDIDO ====================
+
+/* ========= MODAL DE GRÁFICO (VERSÃO ESTÁVEL FINAL) ========= */
+
+let modalChart = null;
+
 function setupChartModal() {
   const modal = document.getElementById('chartModal');
   const modalCanvas = document.getElementById('modalCanvas');
+  const modalTitle = document.getElementById('modalTitle');
   const closeBtn = modal.querySelector('.modal-close');
-  
-  // Fechar modal ao clicar no fundo escuro ou no X
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal || e.target === closeBtn) {
-      modal.classList.remove('active');
-      // Limpar canvas para não ficar ocupando memória
-      const ctx = modalCanvas.getContext('2d');
-      ctx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
-    }
-  });
-  
-  // Adicionar evento de clique em todos os canvas de gráfico
-  function bindChartClick() {
-    const charts = document.querySelectorAll('#chartsGrid canvas');
-    charts.forEach(canvas => {
-      canvas.style.cursor = 'pointer';
-      canvas.removeEventListener('click', handleChartClick);
-      canvas.addEventListener('click', handleChartClick);
-    });
-  }
-  
-  function handleChartClick(e) {
-    const originalCanvas = e.currentTarget;
-    const chartId = originalCanvas.id;
-    const chartInstance = chartInstances.find(ch => ch.canvas.id === chartId);
-    if (!chartInstance) return;
-    
-    // Configurar modalCanvas com as mesmas dimensões do original (mas ampliado)
-    modalCanvas.width = originalCanvas.width;
-    modalCanvas.height = originalCanvas.height;
-    modalCanvas.style.width = 'auto';
-    modalCanvas.style.height = 'auto';
-    modalCanvas.style.maxWidth = '90vw';
-    modalCanvas.style.maxHeight = '80vh';
-    
-    // Redesenhar o gráfico no modal
-    const ctx = modalCanvas.getContext('2d');
-    ctx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
-    
-    // Clonar configuração do gráfico
-    const originalConfig = chartInstance.config;
-    if (window.modalChart) {
-      window.modalChart.destroy();
-    }
-    window.modalChart = new Chart(modalCanvas, {
-      type: originalConfig.type,
-      data: JSON.parse(JSON.stringify(originalConfig.data)),
-      options: JSON.parse(JSON.stringify(originalConfig.options))
-    });
-    
-    modal.classList.add('active');
-  }
-  
-  return bindChartClick;
+  const btnExport = document.getElementById('btnExportChart');
+  const btnShowData = document.getElementById('btnShowData');
+  const dataBox = document.getElementById('modalDataBox');
+
+const btnClear = document.getElementById('btnClearChartFilter');
+
+if (btnClear) {
+  btnClear.onclick = () => {
+    // 🔄 reset total simples
+    location.reload();
+  };
 }
+
+
+  function closeModal() {
+    modal.classList.remove('active');
+    dataBox.style.display = 'none';
+    if (modalChart) {
+      modalChart.destroy();
+      modalChart = null;
+    }
+  }
+
+  modal.addEventListener('click', e => {
+    if (e.target === modal || e.target === closeBtn) closeModal();
+  });
+
+  document.getElementById('chartsGrid').addEventListener('click', e => {
+    const card = e.target.closest('.chart-card');
+    if (!card) return;
+
+    const canvas = card.querySelector('canvas');
+    if (!canvas) return;
+
+    const chart = chartInstances.find(c => c.canvas === canvas);
+    if (!chart) return;
+
+    if (modalChart) modalChart.destroy();
+
+    modalTitle.textContent =
+      card.querySelector('.chart-title')?.textContent || 'Gráfico';
+
+// 🔥 FORÇA O TAMANHO REAL DO MODAL E DO CANVAS
+
+// ✅ largura total, altura automática (NUNCA fixa)
+modalCanvas.style.width = '100%';
+modalCanvas.style.height = '100%';
+
+const modalContent = modalCanvas.closest('.modal-content');
+modalContent.style.width = '90vw';
+modalContent.style.maxHeight = '90vh';
+modalContent.style.overflow = 'hidden';
+``
+
+
+modalChart = new Chart(modalCanvas, {
+  type: chart.config.type,
+  data: JSON.parse(JSON.stringify(chart.config.data)),
+  options: {
+    ...JSON.parse(JSON.stringify(chart.config.options)),
+
+    responsive: true,
+    maintainAspectRatio: false,
+
+    // 👉 ESSENCIAL para não ficar estreito
+    aspectRatio: null,
+
+    layout: { padding: 12 },
+
+    scales: {
+      ...(chart.config.options.scales || {}),
+      x: { ticks: { autoSkip: false } }
+    },
+
+    onClick(evt, elements) {
+      if (!elements.length) return;
+
+      const index = elements[0].index;
+      filters.text = this.data.labels[index];
+      renderAll();
+
+      const btnClear = document.getElementById('btnClearChartFilter');
+      if (btnClear) btnClear.style.display = 'inline-flex';
+
+      closeModal();
+    }
+  }
+});
+
+// 🚀 obriga o Chart.js a recalcular tamanho após montar
+requestAnimationFrame(() => modalChart.resize());
+    btnExport.onclick = () => {
+      const a = document.createElement('a');
+      a.download = `grafico_${Date.now()}.png`;
+      a.href = modalCanvas.toDataURL('image/png');
+      a.click();
+    };
+
+    btnShowData.onclick = () => {
+      dataBox.textContent = modalChart.data.labels
+        .map((l, i) =>
+          `${l}: ${modalChart.data.datasets.map(d => d.data[i]).join(', ')}`
+        )
+        .join('\n');
+      dataBox.style.display =
+        dataBox.style.display === 'none' ? 'block' : 'none';
+    };
+
+    modal.classList.add('active');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', setupChartModal);
 
 // ==================== STATE ====================
 let allCases=[];
