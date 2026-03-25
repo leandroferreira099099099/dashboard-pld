@@ -338,6 +338,16 @@ a:hover{color:var(--link-hover)}
   border-color: var(--risk-high);
 }
 
+/* NOVAS REGRAS PARA GARANTIR ESPAÇO DOS GRÁFICOS */
+.charts-grid .chart-card {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+}
+.charts-grid canvas {
+  flex: 1;
+  width: 100%;
+}
 
 </style>
 </head>
@@ -1693,15 +1703,16 @@ function renderCharts(cases){
   const resTrend=getResTrend(cases);
   const cohort=getResolutionCohort(cohortCases);
 
+  // ALTERAÇÃO: aumentada a altura dos últimos 4 gráficos para 150px
   grid.innerHTML=`
     <div class="chart-card"><h3 class="chart-title">Casos por Tipo</h3><canvas id="chTipo" height="80"></canvas></div>
     <div class="chart-card"><h3 class="chart-title">Distribuição de Risco</h3><canvas id="chRisco" height="80"></canvas></div>
     <div class="chart-card span-2"><h3 class="chart-title">Evolução Mensal de Casos</h3><canvas id="chTimeline" height="80"></canvas></div>
     <div class="chart-card span-2"><h3 class="chart-title">Safra de Resolução — Total, Mesmo Mês e Mês Seguinte</h3><canvas id="chCohort" height="80"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Carga de Trabalho (Casos Abertos)</h3><canvas id="chWorkload" height="80"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Visão SLA — Casos Abertos</h3><canvas id="chSla" height="80"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Distribuição por Status</h3><canvas id="chStatus" height="80"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Tempo Médio de Resolução (dias)</h3><canvas id="chRes" height="80"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Carga de Trabalho (Casos Abertos)</h3><canvas id="chWorkload" height="150"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Visão SLA — Casos Abertos</h3><canvas id="chSla" height="150"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Distribuição por Status</h3><canvas id="chStatus" height="150"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Tempo Médio de Resolução (dias)</h3><canvas id="chRes" height="150"></canvas></div>
   `;
 
   const tipoLabels=Object.keys(tipoCount);
@@ -1824,7 +1835,8 @@ function renderCharts(cases){
     }
   }
 
-  makeChart('chWorkload',{type:'bar',data:{labels:wlSorted.map(w=>w[0].split(' ').slice(0,2).join(' ')),datasets:[{data:wlSorted.map(w=>w[1]),backgroundColor:'hsla(215,35%,62%,0.60)'}]},options:{plugins:{legend:{display:false},datalabels:badgeLabels(()=>darkenColor('hsl(215,35%,62%)'),{anchor:'end',align:'end',offset:4})},scales:{x:{ticks:{font:{size:9},maxRotation:20}},y:{ticks:{font:{size:11}}}}}});
+  // Gráfico de carga de trabalho: ajuste de rotação dos rótulos para 45° e aumento de altura já aplicado via canvas height
+  makeChart('chWorkload',{type:'bar',data:{labels:wlSorted.map(w=>w[0].split(' ').slice(0,2).join(' ')),datasets:[{data:wlSorted.map(w=>w[1]),backgroundColor:'hsla(215,35%,62%,0.60)'}]},options:{plugins:{legend:{display:false},datalabels:badgeLabels(()=>darkenColor('hsl(215,35%,62%)'),{anchor:'end',align:'end',offset:4})},scales:{x:{ticks:{font:{size:9},maxRotation:45,autoSkip:true}},y:{ticks:{font:{size:11}}}}}});
   makeChart('chSla',{type:'bar',data:{labels:['Estourado','Em Risco','No Prazo'],datasets:[{data:[breached,warning,ok],backgroundColor:['hsl(0,70%,60%)','hsl(38,90%,62%)','hsl(142,45%,55%)']}]},options:{plugins:{legend:{display:false},datalabels:badgeLabels((ctx)=>darkenColor(ctx.dataset.backgroundColor[ctx.dataIndex]),{anchor:'end',align:'end',offset:4})}}});
   makeChart('chStatus',{type:'bar',data:{labels:['Abertos','COAF','Concluídos'],datasets:[{data:[statusD.open,statusD.coaf,statusD.closed],backgroundColor:['hsl(217,60%,62%)','hsl(263,45%,64%)','hsl(142,45%,55%)']}]},options:{plugins:{legend:{display:false},datalabels:badgeLabels((ctx)=>darkenColor(ctx.dataset.backgroundColor[ctx.dataIndex]),{anchor:'end',align:'end',offset:4})}}});
   makeChart('chRes',{type:'line',data:{labels:resTrend.map(r=>r.month),datasets:[{label:'Dias',data:resTrend.map(r=>r.avg),borderColor:'hsl(263,45%,64%)',backgroundColor:'hsl(263,45%,64%)',pointRadius:3,tension:0.3,datalabels:badgeLabels(()=>darkenColor('hsl(263,45%,64%)'),{anchor:'end',align:'top',offset:4})}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:11}}}}}});
@@ -1955,17 +1967,17 @@ function renderPersonPanel(cases){
     const isExpanded = expandedPerson === p.identifier;
     
     h+=`<tr style="cursor:pointer" onclick="expandedPerson=expandedPerson==='${p.identifier}'?null:'${p.identifier}';renderAll()">
-      <td class="mono-id">${displayId}</td>
-      <td style="font-weight:700">${p.totalCases}</td>
-      <td><span class="badge badge-status-open">${p.openCases}</span></td>
-      <td><span class="badge badge-status-done">${p.closedCases}</span></td>
-      <td>${p.coafCases>0?`<span class="badge badge-coaf">${p.coafCases}</span>`:'—'}</td>
-      <td>${fmtDate(p.lastCoafDate)}</td>
-      <td>${p.coafCases>0?(p.coafInLast6Months?'<span class="badge badge-risk-high">⚠ Sim</span>':'<span class="badge badge-risk-low">Não</span>'):'—'}</td>
-      <td><span class="badge ${rClass}">${p.riskLevel}</span></td>
-      <td>${fmtDate(p.firstCaseDate)}</td>
-      <td>${fmtDate(p.lastCaseDate)}</td>
-     </tr>`;
+      <td class="mono-id">${displayId}<\/td>
+      <td style="font-weight:700">${p.totalCases}<\/td>
+      <td><span class="badge badge-status-open">${p.openCases}<\/span><\/td>
+      <td><span class="badge badge-status-done">${p.closedCases}<\/span><\/td>
+      <td>${p.coafCases>0?`<span class="badge badge-coaf">${p.coafCases}<\/span>`:'—'}<\/td>
+      <td>${fmtDate(p.lastCoafDate)}<\/td>
+      <td>${p.coafCases>0?(p.coafInLast6Months?'<span class="badge badge-risk-high">⚠ Sim</span>':'<span class="badge badge-risk-low">Não</span>'):'—'}<\/td>
+      <td><span class="badge ${rClass}">${p.riskLevel}<\/span><\/td>
+      <td>${fmtDate(p.firstCaseDate)}<\/td>
+      <td>${fmtDate(p.lastCaseDate)}<\/td>
+      <\/tr>`;
     
     if(isExpanded){
       h+=`<tr class="expanded-row">
@@ -1988,12 +2000,12 @@ function renderPersonPanel(cases){
         </div>`;
       });
       
-      h+=`</div></div>        </td>
-      </tr>`;
+      h+=`</div></div>         <\/td>
+       <\/tr>`;
     }
   });
   
-  h+=`</tbody></table></div>`;
+  h+=`</tbody><\/table><\/div>`;
   if(reincidentes.length===0&&filtered.length>0)h+=`<p style="font-size:0.75rem;color:var(--muted-fg);margin-top:0.75rem;text-align:center">Nenhum reincidente encontrado. Mostrando todos os ${filtered.length} registros.</p>`;
   panel.innerHTML = h;
   
@@ -2039,19 +2051,19 @@ function renderTable(cases){
     const sBadge=isCoaf(c.status)?'badge-coaf':isOpen(c.status)?'badge-status-open':'badge-status-done';
     
     h+=`<tr>
-      <td class="mono-id"><a href="${JIRA_BASE_URL}${c.id}" target="_blank">${c.id}</a></td>
-      <td>${c.tipo}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${(c.resumo||'').replace(/"/g,'&quot;')}">${c.resumo}</td>
-      <td><span class="badge ${sBadge}">${c.status}</span></td>
-      <td>${c.responsavel||'—'}</td>
-      <td><span class="badge ${rBadge}">${c.risco}</span></td>
-      <td><span class="badge ${slaDisplay.badge}" title="${slaDisplay.tooltip}">${slaDisplay.display}</span></td>
-      <td style="white-space:nowrap">${fmtDate(c.data_transacao_pld)}</td>
-      <td style="white-space:nowrap">${fmtDate(c.criado)}</td>
-      <td style="white-space:nowrap">${fmtDate(c.resolvido)}</td>
-     </tr>`;
+      <td class="mono-id"><a href="${JIRA_BASE_URL}${c.id}" target="_blank">${c.id}</a><\/td>
+      <td>${c.tipo}<\/td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${(c.resumo||'').replace(/"/g,'&quot;')}">${c.resumo}<\/td>
+      <td><span class="badge ${sBadge}">${c.status}<\/span><\/td>
+      <td>${c.responsavel||'—'}<\/td>
+      <td><span class="badge ${rBadge}">${c.risco}<\/span><\/td>
+      <td><span class="badge ${slaDisplay.badge}" title="${slaDisplay.tooltip}">${slaDisplay.display}<\/span><\/td>
+      <td style="white-space:nowrap">${fmtDate(c.data_transacao_pld)}<\/td>
+      <td style="white-space:nowrap">${fmtDate(c.criado)}<\/td>
+      <td style="white-space:nowrap">${fmtDate(c.resolvido)}<\/td>
+      <\/tr>`;
   });
-  h+=`</tbody></table></div>`;
+  h+=`</tbody><\/table><\/div>`;
   panel.innerHTML=h;
 }
 
