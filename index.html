@@ -40,10 +40,10 @@
   --trend-up: hsl(142,55%,45%);
   --trend-down: hsl(0,70%,55%);
   --trend-stable: hsl(38,85%,50%);
-  --update-badge-bg: #e8f5e9;
-  --update-badge-color: #2e7d32;
-  --update-badge-warning-bg: #ffebee;
-  --update-badge-warning-color: #c62828;
+  --update-badge-bg: #c8e6c9;
+  --update-badge-color: #1b5e20;
+  --update-badge-warning-bg: #ffcdd2;
+  --update-badge-warning-color: #b71c1c;
 }
 body{font-family:'Inter',sans-serif;background:var(--background);color:var(--foreground);-webkit-font-smoothing:antialiased}
 .container{max-width:1400px;margin:0 auto;padding:0 1rem}
@@ -78,7 +78,8 @@ main{padding:1.5rem 0}main>*+*{margin-top:1.5rem}
 .trend-stable{color:var(--trend-stable)}
 .charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
 @media(max-width:768px){.charts-grid{grid-template-columns:1fr}}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;box-shadow:0 1px 3px rgba(0,0,0,0.04);cursor:pointer;transition:all 0.2s}
+.chart-card:hover{transform:scale(1.01);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
 .chart-card.span-2{grid-column:span 2}
 @media(max-width:768px){.chart-card.span-2{grid-column:span 1}}
 .chart-title{font-size:0.875rem;font-weight:600;margin-bottom:1rem}
@@ -184,6 +185,69 @@ a:hover{color:var(--link-hover)}
 [data-theme='dark'] ::-webkit-scrollbar-thumb:hover{background:var(--link-color)}
 [data-theme='dark'] *{scrollbar-width:thin;scrollbar-color:var(--muted-fg) var(--muted)}
 .expanded-row td{background-color:var(--muted) !important;border-bottom:1px solid var(--border)}
+
+/* Modal de gráfico expandido */
+.chart-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+.chart-modal.active {
+  display: flex;
+}
+.modal-content {
+  background: var(--card);
+  border-radius: 1rem;
+  padding: 1rem;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  position: relative;
+  cursor: default;
+  box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+  animation: modalFadeIn 0.2s ease;
+}
+.modal-content canvas {
+  max-width: 100%;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+}
+.modal-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--muted-fg);
+  background: var(--card);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+.modal-close:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
 </style>
 </head>
 <body>
@@ -226,6 +290,15 @@ a:hover{color:var(--link-hover)}
 </div>
   <footer>Desenvolvido por Leandro Ferreira (2026) — Uso interno</footer>
 </main>
+
+<!-- Modal para expansão de gráficos -->
+<div id="chartModal" class="chart-modal">
+  <div class="modal-content">
+    <span class="modal-close">&times;</span>
+    <canvas id="modalCanvas"></canvas>
+  </div>
+</div>
+
 <script>
 // ==================== CONSTANTES ====================
 const OPEN_STATUSES = ["Novo","Work in progress","Em Análise","Aguardando Retorno Diligências","Em Espera","Pendente","Comitê","Preparação","Aprovação","Aprovação Gestão Compliance"];
@@ -316,7 +389,6 @@ function saveCasesToStorage() {
       version: "1.0"
     };
     localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(dataToStore));
-    // Salva também o timestamp separado para fácil acesso
     localStorage.setItem(STORAGE_TIMESTAMP_KEY, dataToStore.timestamp);
     updateLastUpdateBanner(dataToStore.timestamp);
   }
@@ -329,11 +401,9 @@ function loadCasesFromStorage() {
       const data = JSON.parse(stored);
       if (data.cases && data.cases.length > 0) {
         allCases = data.cases;
-        // Restaura timestamp
         if (data.timestamp) {
           updateLastUpdateBanner(data.timestamp);
         } else {
-          // Se não houver timestamp, tenta buscar separado
           const ts = localStorage.getItem(STORAGE_TIMESTAMP_KEY);
           if (ts) updateLastUpdateBanner(ts);
           else hideUpdateBanner();
@@ -366,7 +436,7 @@ function updateLastUpdateBanner(timestampISO) {
   
   if (isToday) {
     bannerDiv.className = 'update-banner';
-    bannerDiv.innerHTML = `Última atualização: ${formattedDate} (hoje)`;
+    bannerDiv.innerHTML = `📅 Última atualização: ${formattedDate} (hoje)`;
     bannerDiv.style.display = 'inline-flex';
   } else {
     bannerDiv.className = 'update-banner warning';
@@ -1026,17 +1096,17 @@ function updateComparisonCards(cases){
     const cardHtml = `
       <div class="kpi-card">
         <div class="kpi-value">${fmtNum(criadosAtual)}</div>
-        <div class="kpi-label">Criados (${mesAtualNome})</div>
+        <div class="kpi-label">📝 Criados (${mesAtualNome})</div>
         <div class="trend-value ${criadosClass}">${criadosVar} vs ${fmtNum(criadosAnterior)} em ${mesAnteriorNome}</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-value">${fmtNum(resolvidosAtual)}</div>
-        <div class="kpi-label">Resolvidos (${mesAtualNome})</div>
+        <div class="kpi-label">✅ Resolvidos (${mesAtualNome})</div>
         <div class="trend-value ${resolvidosClass}">${resolvidosVar} vs ${fmtNum(resolvidosAnterior)} em ${mesAnteriorNome}</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-value">${fmtNum(coafAtual)}</div>
-        <div class="kpi-label">COAF (${mesAtualNome})</div>
+        <div class="kpi-label">🛡️ COAF (${mesAtualNome})</div>
         <div class="trend-value ${coafClass}">${coafVar} vs ${fmtNum(coafAnterior)} em ${mesAnteriorNome}</div>
       </div>
     `;
@@ -1045,6 +1115,67 @@ function updateComparisonCards(cases){
   } catch(e) {
     console.warn("Erro ao atualizar cards:", e);
   }
+}
+
+// ==================== MODAL DE GRÁFICO EXPANDIDO ====================
+function setupChartModal() {
+  const modal = document.getElementById('chartModal');
+  const modalCanvas = document.getElementById('modalCanvas');
+  const closeBtn = modal.querySelector('.modal-close');
+  
+  // Fechar modal ao clicar no fundo escuro ou no X
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal || e.target === closeBtn) {
+      modal.classList.remove('active');
+      // Limpar canvas para não ficar ocupando memória
+      const ctx = modalCanvas.getContext('2d');
+      ctx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
+    }
+  });
+  
+  // Adicionar evento de clique em todos os canvas de gráfico
+  function bindChartClick() {
+    const charts = document.querySelectorAll('#chartsGrid canvas');
+    charts.forEach(canvas => {
+      canvas.style.cursor = 'pointer';
+      canvas.removeEventListener('click', handleChartClick);
+      canvas.addEventListener('click', handleChartClick);
+    });
+  }
+  
+  function handleChartClick(e) {
+    const originalCanvas = e.currentTarget;
+    const chartId = originalCanvas.id;
+    const chartInstance = chartInstances.find(ch => ch.canvas.id === chartId);
+    if (!chartInstance) return;
+    
+    // Configurar modalCanvas com as mesmas dimensões do original (mas ampliado)
+    modalCanvas.width = originalCanvas.width;
+    modalCanvas.height = originalCanvas.height;
+    modalCanvas.style.width = 'auto';
+    modalCanvas.style.height = 'auto';
+    modalCanvas.style.maxWidth = '90vw';
+    modalCanvas.style.maxHeight = '80vh';
+    
+    // Redesenhar o gráfico no modal
+    const ctx = modalCanvas.getContext('2d');
+    ctx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
+    
+    // Clonar configuração do gráfico
+    const originalConfig = chartInstance.config;
+    if (window.modalChart) {
+      window.modalChart.destroy();
+    }
+    window.modalChart = new Chart(modalCanvas, {
+      type: originalConfig.type,
+      data: JSON.parse(JSON.stringify(originalConfig.data)),
+      options: JSON.parse(JSON.stringify(originalConfig.options))
+    });
+    
+    modal.classList.add('active');
+  }
+  
+  return bindChartClick;
 }
 
 // ==================== STATE ====================
@@ -1159,6 +1290,10 @@ function renderAll(){
   document.getElementById('personPanel').style.display='block';
   document.getElementById('tablePanel').style.display='block';
   attachKpiCardGlow();
+  
+  // Configurar modal após gráficos renderizados
+  const bindModal = setupChartModal();
+  setTimeout(bindModal, 100); // pequeno atraso para garantir que os canvas existam
 }
 
 function attachKpiCardGlow() {
@@ -1347,31 +1482,72 @@ function getResTrend(cases){
   return[...m.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([month,days])=>({month,avg:Math.round(days.reduce((s,d)=>s+d,0)/days.length)}));
 }
 
-// ==================== RENDER PERSON PANEL ====================
+// ==================== RENDER PERSON PANEL (com todas as colunas ordenáveis) ====================
 function renderPersonPanel(cases){
   const panel=document.getElementById('personPanel');
   const corr=buildPersonCorrelations(cases);
   let filtered=corr;
   if(personSearch){const s=personSearch.toLowerCase();filtered=filtered.filter(p=>p.identifier.includes(s))}
-  filtered.sort((a,b)=>b[personSortBy]-a[personSortBy]);
-  const reincidentes=filtered.filter(p=>p.totalCases>=2);
-  const totalWithCoaf=filtered.filter(p=>p.coafCases>0).length;
-  const totalRecent=filtered.filter(p=>p.coafInLast6Months).length;
-  const showList=reincidentes.length>0?reincidentes:filtered;
+  
+  // Função de ordenação genérica
+  function sortPersons(a, b, field, dir) {
+    let valA = a[field];
+    let valB = b[field];
+    if (field === 'firstCaseDate' || field === 'lastCaseDate' || field === 'lastCoafDate') {
+      valA = valA ? new Date(valA).getTime() : -Infinity;
+      valB = valB ? new Date(valB).getTime() : -Infinity;
+    } else if (field === 'riskLevel') {
+      const riskOrder = { Alto: 3, Médio: 2, Baixo: 1 };
+      valA = riskOrder[valA] || 0;
+      valB = riskOrder[valB] || 0;
+    } else if (typeof valA === 'string') {
+      valA = valA.toLowerCase();
+      valB = valB.toLowerCase();
+    }
+    if (valA === valB) return 0;
+    const cmp = valA > valB ? 1 : -1;
+    return dir === 'asc' ? cmp : -cmp;
+  }
+  
+  // Verifica se temos um campo de ordenação atual (salvo em personSortField)
+  if (!window.personSortField) window.personSortField = 'totalCases';
+  if (!window.personSortDir) window.personSortDir = 'desc';
+  filtered.sort((a,b) => sortPersons(a, b, window.personSortField, window.personSortDir));
+  
+  const reincidentes = filtered.filter(p=>p.totalCases>=2);
+  const totalWithCoaf = filtered.filter(p=>p.coafCases>0).length;
+  const totalRecent = filtered.filter(p=>p.coafInLast6Months).length;
+  const showList = reincidentes.length>0?reincidentes:filtered;
 
   const tableWrap = document.querySelector('#personPanel .table-wrap');
   const scrollPosition = tableWrap ? tableWrap.scrollTop : 0;
+
+  // Gera seta de ordenação
+  function sortArrow(field) {
+    if (window.personSortField === field) {
+      return window.personSortDir === 'asc' ? ' ▲' : ' ▼';
+    }
+    return ' ⇅';
+  }
 
   let h=`<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.75rem;margin-bottom:1rem">
     <div><h3 class="chart-title" style="margin-bottom:0">Correlação por CPF / Pessoa</h3>
     <p class="subtitle" style="margin-top:0.25rem">${corr.length} pessoas · ${reincidentes.length} reincidentes · ${totalWithCoaf} com COAF · ${totalRecent} COAF &lt;6 meses</p></div>
     <div style="display:flex;gap:0.5rem">
       <input type="text" class="filter-input" style="width:180px" placeholder="Buscar CPF..." value="${personSearch}" oninput="personSearch=this.value;renderAll()">
-      <select class="filter-select" onchange="personSortBy=this.value;renderAll()"><option value="totalCases"${personSortBy==='totalCases'?' selected':''}>Total</option><option value="openCases"${personSortBy==='openCases'?' selected':''}>Abertos</option><option value="coafCases"${personSortBy==='coafCases'?' selected':''}>COAF</option></select>
     </div></div>`;
   h+=`<div class="person-summary"><div class="mini-kpi"><div class="val">${corr.length}</div><div class="lbl">Pessoas</div></div><div class="mini-kpi"><div class="val" style="color:var(--risk-high)">${reincidentes.length}</div><div class="lbl">Reincidentes</div></div><div class="mini-kpi"><div class="val" style="color:var(--coaf)">${totalWithCoaf}</div><div class="lbl">Com COAF</div></div><div class="mini-kpi"><div class="val" style="color:var(--risk-med)">${totalRecent}</div><div class="lbl">COAF &lt;6m</div></div></div>`;
   h+=`<div class="table-wrap" style="max-height:360px;overflow-y:auto"><table class="data-table"><thead style="position:sticky;top:0;background:var(--card);z-index:5">
-    <th>CPF/Email</th><th>Total</th><th>Abertos</th><th>Encerrados</th><th>COAF</th><th>Último COAF</th><th>COAF &lt;6m</th><th>Risco</th><th>Primeiro Caso</th><th>Último Caso</th>
+    <th onclick="window.personSortField='identifier'; window.personSortDir=(window.personSortField==='identifier' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">CPF/Email${sortArrow('identifier')}</th>
+    <th onclick="window.personSortField='totalCases'; window.personSortDir=(window.personSortField==='totalCases' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Total${sortArrow('totalCases')}</th>
+    <th onclick="window.personSortField='openCases'; window.personSortDir=(window.personSortField==='openCases' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Abertos${sortArrow('openCases')}</th>
+    <th onclick="window.personSortField='closedCases'; window.personSortDir=(window.personSortField==='closedCases' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Encerrados${sortArrow('closedCases')}</th>
+    <th onclick="window.personSortField='coafCases'; window.personSortDir=(window.personSortField==='coafCases' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">COAF${sortArrow('coafCases')}</th>
+    <th onclick="window.personSortField='lastCoafDate'; window.personSortDir=(window.personSortField==='lastCoafDate' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Último COAF${sortArrow('lastCoafDate')}</th>
+    <th onclick="window.personSortField='coafInLast6Months'; window.personSortDir=(window.personSortField==='coafInLast6Months' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">COAF &lt;6m${sortArrow('coafInLast6Months')}</th>
+    <th onclick="window.personSortField='riskLevel'; window.personSortDir=(window.personSortField==='riskLevel' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Risco${sortArrow('riskLevel')}</th>
+    <th onclick="window.personSortField='firstCaseDate'; window.personSortDir=(window.personSortField==='firstCaseDate' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Primeiro Caso${sortArrow('firstCaseDate')}</th>
+    <th onclick="window.personSortField='lastCaseDate'; window.personSortDir=(window.personSortField==='lastCaseDate' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Último Caso${sortArrow('lastCaseDate')}</th>
     </thead><tbody>`;
   
   showList.slice(0,100).forEach(p=>{
@@ -1380,7 +1556,7 @@ function renderPersonPanel(cases){
     const isExpanded = expandedPerson === p.identifier;
     
     h+=`<tr style="cursor:pointer" onclick="expandedPerson=expandedPerson==='${p.identifier}'?null:'${p.identifier}';renderAll()">
-      <td class="mono-id">${displayId}      </td>
+      <td class="mono-id">${displayId}</td>
       <td style="font-weight:700">${p.totalCases}</td>
       <td><span class="badge badge-status-open">${p.openCases}</span></td>
       <td><span class="badge badge-status-done">${p.closedCases}</span></td>
@@ -1390,7 +1566,7 @@ function renderPersonPanel(cases){
       <td><span class="badge ${rClass}">${p.riskLevel}</span></td>
       <td>${fmtDate(p.firstCaseDate)}</td>
       <td>${fmtDate(p.lastCaseDate)}</td>
-    </tr>`;
+     </tr>`;
     
     if(isExpanded){
       h+=`<tr class="expanded-row">
@@ -1474,7 +1650,7 @@ function renderTable(cases){
       <td style="white-space:nowrap">${fmtDate(c.data_transacao_pld)}</td>
       <td style="white-space:nowrap">${fmtDate(c.criado)}</td>
       <td style="white-space:nowrap">${fmtDate(c.resolvido)}</td>
-    </tr>`;
+     </tr>`;
   });
   h+=`</tbody></table></div>`;
   panel.innerHTML=h;
