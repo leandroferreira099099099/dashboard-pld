@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0137)https://tess-workflows-files.storage.googleapis.com/f2b02d907bd1dd803654d9292a4b0d67b66e14ed/dashboard_data_combinada_tooltip_badges.html -->
+<!-- saved from url=(0123)https://tess-workflows-files.storage.googleapis.com/4c2e5a94b6940f81afaddf828740e25318b2e1ec/dashboard_tabs_fix_github.html -->
 <html lang="pt-BR" data-theme="dark" data-expander-initialized="true"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -389,11 +389,17 @@ a:hover{color:var(--link-hover)}
         </select><button id="btnClearFilters" class="filter-input" style="height:36px;cursor:pointer;min-width:180px" onclick="clearOnlyFilters()">Limpar filtros</button></div>
   <div id="dateFilters" class="filters" style="display: flex;"><span class="subtitle">Data Combinada (Transação+Criação)</span><span class="help-tip" title="Usa Data Transação PLD quando existir; senão, Data de Criação.">?</span><span class="subtitle">de:</span><input type="date" class="filter-input" style="width:140px" value="2025-12-25" onchange="filters.dateFrom=this.value;renderAll()"><span class="subtitle">até:</span><input type="date" class="filter-input" style="width:140px" value="2026-03-25" onchange="filters.dateTo=this.value;renderAll()"><button id="btnClearDates" class="filter-input" style="height:36px;cursor:pointer;margin-left:0.5rem;min-width:220px" onclick="clearDateFilters()">Limpar datas</button></div>
   <div class="tabs-container">
-    <button class="tab-btn active" data-tab="operacional"><span>Operacional</span></button>
-    <button class="tab-btn" data-tab="graficos"><span>Gerencial</span></button>
+    <button class="tab-btn active" data-tab="operacional" onclick="switchTab(&#39;operacional&#39;)"><span>Operacional</span></button>
+    <button class="tab-btn" data-tab="graficos" onclick="switchTab(&#39;graficos&#39;)"><span>Gerencial</span></button>
 </div>
+<script>
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.toggle('active', content.id === `tab-${tabId}`));
+}
+</script>
 <div id="tab-operacional" class="tab-content active">
-    <div id="kpiGrid" class="kpi-grid"><div class="kpi-card" style="transition: box-shadow 0.18s;"><div class="kpi-value" style="color:var(--foreground)">2.031</div><div class="kpi-label">Total de Casos</div></div><div class="kpi-card" style="transition: box-shadow 0.18s;"><div class="kpi-value" style="color:var(--status-open)">725</div><div class="kpi-label">Abertos</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--status-done)">1.292</div><div class="kpi-label">Concluídos</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--coaf)">14</div><div class="kpi-label">Comunicados</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--risk-high)">314</div><div class="kpi-label">SLA Estourado</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--risk-high)">1.302</div><div class="kpi-label">Risco Alto</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--foreground)">6d</div><div class="kpi-label">Tempo Médio Resolução</div></div></div>
+    <div id="kpiGrid" class="kpi-grid"><div class="kpi-card"><div class="kpi-value" style="color:var(--foreground)">2.031</div><div class="kpi-label">Total de Casos</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--status-open)">725</div><div class="kpi-label">Abertos</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--status-done)">1.292</div><div class="kpi-label">Concluídos</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--coaf)">14</div><div class="kpi-label">Comunicados</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--risk-high)">314</div><div class="kpi-label">SLA Estourado</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--risk-high)">1.302</div><div class="kpi-label">Risco Alto</div></div><div class="kpi-card"><div class="kpi-value" style="color:var(--foreground)">6d</div><div class="kpi-label">Tempo Médio Resolução</div></div></div>
     <div id="slaAlertsPanel" class="sla-alerts-panel" style="display: block;"><div class="sla-alerts-row">
     <div class="sla-alert-card">
       <div class="sla-alert-title">
@@ -6874,7 +6880,7 @@ a:hover{color:var(--link-hover)}
 </div>
 <div id="tab-graficos" class="tab-content">
     <div id="comparisonCards" class="kpi-grid" style="margin-bottom:1rem">
-      <div class="kpi-card" style="transition: box-shadow 0.18s;">
+      <div class="kpi-card">
         <div class="kpi-value">1.117</div>
         <div class="kpi-label">📝 Criados (Março)</div>
         <div class="trend-value trend-up">↑ 253.5% vs 316 em Fevereiro</div>
@@ -6891,14 +6897,14 @@ a:hover{color:var(--link-hover)}
       </div>
     </div>
     <div id="chartsGrid" class="charts-grid">
-    <div class="chart-card"><h3 class="chart-title">Casos por Tipo</h3><canvas id="chTipo" height="176" style="display: block; box-sizing: border-box; height: 176px; width: 661px;" width="661"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Distribuição de Risco</h3><canvas id="chRisco" height="176" style="display: block; box-sizing: border-box; height: 176px; width: 661px;" width="661"></canvas></div>
-    <div class="chart-card span-2"><h3 class="chart-title">Evolução Mensal de Casos</h3><canvas id="chTimeline" height="360" style="display: block; box-sizing: border-box; height: 360px; width: 1353px;" width="1353"></canvas></div>
-    <div class="chart-card span-2"><h3 class="chart-title">Safra de Resolução — Total, Mesmo Mês e Mês Seguinte</h3><canvas id="chCohort" height="360" style="display: block; box-sizing: border-box; height: 360px; width: 1353px;" width="1353"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Carga de Trabalho (Casos Abertos)</h3><canvas id="chWorkload" height="176" style="display: block; box-sizing: border-box; height: 176px; width: 661px;" width="661"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Visão SLA — Casos Abertos</h3><canvas id="chSla" height="176" style="display: block; box-sizing: border-box; height: 176px; width: 661px;" width="661"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Distribuição por Status</h3><canvas id="chStatus" height="176" style="display: block; box-sizing: border-box; height: 176px; width: 661px;" width="661"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Tempo Médio de Resolução (dias)</h3><canvas id="chRes" height="176" style="display: block; box-sizing: border-box; height: 176px; width: 661px;" width="661"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Casos por Tipo</h3><canvas id="chTipo" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Distribuição de Risco</h3><canvas id="chRisco" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    <div class="chart-card span-2"><h3 class="chart-title">Evolução Mensal de Casos</h3><canvas id="chTimeline" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    <div class="chart-card span-2"><h3 class="chart-title">Safra de Resolução — Total, Mesmo Mês e Mês Seguinte</h3><canvas id="chCohort" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Carga de Trabalho (Casos Abertos)</h3><canvas id="chWorkload" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Visão SLA — Casos Abertos</h3><canvas id="chSla" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Distribuição por Status</h3><canvas id="chStatus" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    <div class="chart-card"><h3 class="chart-title">Tempo Médio de Resolução (dias)</h3><canvas id="chRes" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
   </div>
 </div>
   <footer>Desenvolvido por Leandro Ferreira (2026) — Uso interno</footer>
@@ -7904,7 +7910,7 @@ let personSortBy='totalCases';
 let personSearch='';
 let chartInstances=[];
 
-Chart.register(ChartDataLabels);
+if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') { Chart.register(ChartDataLabels); }
 
 Chart.defaults.plugins.datalabels = {
   color: '#334155', anchor: 'center', align: 'center', font: { size: 13, weight: '600' }, formatter: (v) => v
@@ -8638,11 +8644,6 @@ if (document.readyState === 'loading'){
 }
 
 // ==================== SWITCH TAB ====================
-function switchTab(tabId) {
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
-  document.querySelectorAll('.tab-content').forEach(content => content.classList.toggle('active', content.id === `tab-${tabId}`));
-}
-
 document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
 </script>
 
