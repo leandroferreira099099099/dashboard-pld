@@ -54,12 +54,12 @@ h1{font-size:1.125rem;font-weight:700} .subtitle{font-size:0.75rem;color:var(--m
 .update-banner{font-size:0.75rem;padding:0.25rem 0.75rem;border-radius:20px;background:var(--update-badge-bg);color:var(--update-badge-color);display:inline-flex;align-items:center;gap:0.5rem;white-space:nowrap}
 .update-banner.warning{background:var(--update-badge-warning-bg);color:var(--update-badge-warning-color)}
 main{padding:1.5rem 0}main>*+*{margin-top:1.5rem}
-.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:2rem;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:2rem;text-align:center;cursor:pointer;transition:all .2s margin-bottom: 2rem !important; margin-top: 1rem !important;}
 .upload-zone:hover{border-color:var(--link-color);background:hsla(215,50%,23%,0.05)}
-.filters{display:flex;gap:0.75rem;flex-wrap:wrap}
+.filters{display:flex;gap:0.75rem;flex-wrap:wrap margin-bottom: 1.5rem !important;}
 .filter-select,.filter-input{height:36px;border:1px solid var(--border);border-radius:8px;padding:0 0.75rem;font-size:0.75rem;background:var(--card);outline:none}
 .filter-select:focus,.filter-input:focus{border-color:var(--link-color)}
-.tabs-container{display:flex;gap:0.5rem;margin-bottom:1.5rem;border-bottom:2px solid var(--border);padding-bottom:0}
+
 .tab-btn{display:flex;align-items:center;gap:0.5rem;padding:0.75rem 1.5rem;font-size:0.875rem;font-weight:600;background:transparent;border:none;cursor:pointer;border-radius:8px 8px 0 0;transition:all 0.2s;color:var(--muted-fg)}
 .tab-btn svg{width:18px;height:18px;stroke-width:1.8}
 .tab-btn:hover{background:var(--muted);color:var(--foreground)}
@@ -67,7 +67,7 @@ main{padding:1.5rem 0}main>*+*{margin-top:1.5rem}
 .tab-btn.active svg{stroke:white}
 .tab-content{display:none}
 .tab-content.active{display:block}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem margin-bottom: 2rem !important;}
 .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;text-align:center;transition:transform .18s ease, box-shadow .18s ease}
 .kpi-card:hover{transform:translateY(-2px) scale(1.02)}
 .kpi-value{font-size:1.875rem;font-weight:800;letter-spacing:-0.025em}
@@ -76,17 +76,17 @@ main{padding:1.5rem 0}main>*+*{margin-top:1.5rem}
 .trend-up{color:var(--trend-up)}
 .trend-down{color:var(--trend-down)}
 .trend-stable{color:var(--trend-stable)}
-.charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2rem}
 @media(max-width:768px){.charts-grid{grid-template-columns:1fr}}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;box-shadow:0 1px 3px rgba(0,0,0,0.04);cursor:pointer;transition:all 0.2s}
 .chart-card:hover{transform:scale(1.01);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
 .chart-card.span-2{grid-column:span 2}
 @media(max-width:768px){.chart-card.span-2{grid-column:span 1}}
 .chart-title{font-size:0.875rem;font-weight:600;margin-bottom:1rem}
-.sla-alerts-panel{display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem}
+.sla-alerts-panel{display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem margin-bottom: 2rem !important;}
 .sla-alerts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
 .sla-alert-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;overflow:hidden}
-.sla-alert-title{font-size:0.875rem;font-weight:700;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:0.5rem}
+.sla-alert-title{font-size:0.875rem;font-weight:700;margin-bottom:0.75rem;padding-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem}
 .sla-alert-title svg{width:18px;height:18px;stroke-width:1.8}
 .sla-alert-list{max-height:300px;overflow-y:auto;font-size:0.75rem}
 .sla-alert-item{padding:0.5rem;border-bottom:1px solid var(--muted);display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap}
@@ -340,14 +340,99 @@ a:hover{color:var(--link-hover)}
 
 /* NOVAS REGRAS PARA GARANTIR ESPAÇO DOS GRÁFICOS */
 .charts-grid .chart-card {
-  min-height: 260px;
+  min-height: 400px;
   display: flex;
   flex-direction: column;
-}
+ min-height: 400px;}
+
 .charts-grid canvas {
-  flex: 1;
-  width: 100%;
+  width: 100% !important;
+  height: 100% !important;
 }
+
+
+
+
+/* Ensure the margins for tabs/filters inside don't break the sticky look */
+
+
+
+
+/* ESPECIFICO PARA MANTER AS CAIXAS SEPARADAS NA ROLAGEM */
+.kpi-grid { margin-bottom: 2rem !important; }
+.comparison-cards { margin-bottom: 2.5rem !important; }
+.sla-alerts-panel { margin-bottom: 2.5rem !important; margin-top: 1rem !important; }
+#tablePanel { margin-bottom: 3rem !important; }
+#personPanel { margin-bottom: 2.5rem !important; }
+
+
+
+.sticky-controls .filters { margin-bottom: 0.75rem !important; }
+/* E DEVOLVEMOS A BORDA PARA O CONTAINER DOS BOTÕES COM MARGEM ZERO PRA BAIXO! */
+.sticky-controls 
+.tab-btn {
+  margin-bottom: -2px; /* O PULO DO GATO: o botão entra 2 pixels pra baixo tapando e conectando com a linha! */
+}
+
+
+
+
+
+/* O QUE CRIA A LINHA É EXCLUSIVAMENTE O TABS-CONTAINER */
+.tabs-container {
+  display: flex !important;
+  gap: 0.5rem !important;
+  border-bottom: 2px solid var(--border) !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  align-items: stretch !important; /* Estica os botões para grudarem embaixo */
+}
+
+/* OS BOTÕES DEVEM TOCAR O FUNDO */
+.tab-btn {
+  margin-bottom: -2px !important; /* Sobretém a linha de 2px */
+  border: 1px solid transparent; 
+  border-bottom: none;
+}
+
+
+
+.tabs-container {
+  display: flex !important;
+  gap: 0.5rem !important;
+  margin-bottom: 1.5rem !important;
+  border-bottom: 2px solid var(--border) !important;
+  padding-bottom: 0 !important;
+}
+.tab-btn {
+  margin-bottom: -2px !important;
+}
+
+
+.sticky-controls .filters {
+  margin-top: 0 !important;
+  margin-bottom: 0.75rem !important;
+}
+.sticky-controls .filters:last-child {
+  margin-bottom: 0 !important;
+}
+
+
+.tabs-container {
+  display: flex !important;
+  gap: 0.5rem !important;
+  border-bottom: 2px solid var(--border) !important;
+  margin-bottom: 1.5rem !important;
+  padding-bottom: 0 !important;
+  align-items: stretch !important;
+}
+.tab-btn {
+  margin-bottom: -2px !important;
+  border: 1px solid transparent;
+  border-bottom: none !important;
+}
+#filtersSection { margin-top: 1rem; }
+#dateFilters { margin-bottom: 1rem; }
 
 </style>
 </head>
@@ -579,6 +664,13 @@ function hideUpdateBanner() {
   if (bannerDiv) bannerDiv.style.display = 'none';
 }
 
+// Verifica a atualizacao do banner periodicamente
+setInterval(function() {
+  const ts = localStorage.getItem(STORAGE_TIMESTAMP_KEY);
+  if (ts) updateLastUpdateBanner(ts);
+}, 60000);
+
+
 // ==================== FUNÇÕES SLA ====================
 function isOpen(s){return OPEN_STATUSES.includes(s)}
 function isCoaf(s){return COAF_STATUSES.includes(s)}
@@ -636,6 +728,7 @@ function getSlaRefDate(c){
 
 function getSlaRemainingDays(c){
   if(!isOpen(c.status)) return null;
+  if(c.tipo === "KYP Afiliados" && c.status === "Em Espera") return null; /* Remove do quadro de alertas! */
   
   const ref = getSlaRefDate(c);
   if(!ref) return null;
@@ -665,6 +758,7 @@ function getSlaRemainingDays(c){
 
 function getSlaStatus(c){
   if(!isOpen(c.status)) return "resolved";
+  if(c.tipo === "KYP Afiliados" && c.status === "Em Espera") return "paused";
   const remaining = getSlaRemainingDays(c);
   if(remaining === null) return "ok";
   if(remaining < 0) return "breached";
@@ -707,6 +801,15 @@ function getDataVencimento(c) {
 }
 
 function getSlaDisplay(c) {
+  if (c.tipo === "KYP Afiliados" && c.status === "Em Espera") {
+    return {
+      status: "paused",
+      text: "Em Espera",
+      badge: "badge-risk-med",
+      display: "⏳ Em Espera",
+      tooltip: "SLA em espera"
+    };
+  }
   const isKYP = c.tipo === "KYP / Background Check" || c.tipo === "KYP / Monitoramento" || c.tipo === "KYP Afiliados";
   const slaStatus = getSlaStatus(c);
   const remaining = getSlaRemainingDays(c);
@@ -790,7 +893,7 @@ function getStatusCategory(s){
 function fmtDate(d){if(!d)return"—";const dt=new Date(d);if(isNaN(dt))return"—";return dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"})}
 function fmtNum(n){return n.toLocaleString("pt-BR")}
 
-// ==================== EXTRAÇÃO ====================
+// ==================== EXTRAÇíO ====================
 function extractCPF(text) {
   if (!text) return null;
   let match = text.match(/\b\d{11}\b/);
@@ -1262,7 +1365,7 @@ function updateComparisonCards(cases){
 }
 
 
-/* ========= MODAL DE GRÁFICO (VERSÃO ESTÁVEL FINAL) ========= */
+/* ========= MODAL DE GRÁFICO (VERSíO ESTÁVEL FINAL) ========= */
 
 let modalChart = null;
 
@@ -1642,6 +1745,9 @@ function makeChart(canvasId,config){
   if(!hasChartLib()) return null;
   const ctx=document.getElementById(canvasId);
   if(!ctx)return null;
+  if(!config.options) config.options={};
+  config.options.maintainAspectRatio = false;
+  config.options.responsive = true;
   const chart=new Chart(ctx,config);
   chartInstances.push(chart);
   return chart;
@@ -1703,17 +1809,17 @@ function renderCharts(cases){
   const resTrend=getResTrend(cases);
   const cohort=getResolutionCohort(cohortCases);
 
-  // ALTERAÇÃO: aumentada a altura dos últimos 4 gráficos para 150px
+  // ALTERAÇíO: aumentada a altura dos últimos 4 gráficos para 150px
   grid.innerHTML=`
-    <div class="chart-card"><h3 class="chart-title">Casos por Tipo</h3><canvas id="chTipo" height="80"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Distribuição de Risco</h3><canvas id="chRisco" height="80"></canvas></div>
-    <div class="chart-card span-2"><h3 class="chart-title">Evolução Mensal de Casos</h3><canvas id="chTimeline" height="80"></canvas></div>
-    <div class="chart-card span-2"><h3 class="chart-title">Safra de Resolução — Total, Mesmo Mês e Mês Seguinte</h3><canvas id="chCohort" height="80"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Carga de Trabalho (Casos Abertos)</h3><canvas id="chWorkload" height="150"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Visão SLA — Casos Abertos</h3><canvas id="chSla" height="150"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Distribuição por Status</h3><canvas id="chStatus" height="150"></canvas></div>
-    <div class="chart-card"><h3 class="chart-title">Tempo Médio de Resolução (dias)</h3><canvas id="chRes" height="150"></canvas></div>
-  `;
+    <div class="chart-card"><h3 class="chart-title">Casos por Tipo</h3><div style="position:relative;flex:1;min-height:0"><canvas id="chTipo"></canvas></div></div>
+    <div class="chart-card"><h3 class="chart-title">Distribuição de Risco</h3><div style="position:relative;flex:1;min-height:0"><canvas id="chRisco"></canvas></div></div>
+    <div class="chart-card span-2"><h3 class="chart-title">Evolução Mensal de Casos</h3><div style="position:relative;flex:1;min-height:0"><canvas id="chTimeline"></canvas></div></div>
+    <div class="chart-card span-2"><h3 class="chart-title">Safra de Resolução — Total, Mesmo Mês e Mês Seguinte</h3><div style="position:relative;flex:1;min-height:0"><canvas id="chCohort"></canvas></div></div>
+    <div class="chart-card"><h3 class="chart-title">Carga de Trabalho (Casos Abertos)</h3><div style="position:relative;flex:1;min-height:0"><canvas id="chWorkload"></canvas></div></div>
+    <div class="chart-card"><h3 class="chart-title">Visão SLA — Casos Abertos</h3><div style="position:relative;flex:1;min-height:0"><canvas id="chSla"></canvas></div></div>
+    <div class="chart-card"><h3 class="chart-title">Distribuição por Status</h3><div style="position:relative;flex:1;min-height:0"><canvas id="chStatus"></canvas></div></div>
+    <div class="chart-card"><h3 class="chart-title">Tempo Médio de Resolução (dias)</h3><div style="position:relative;flex:1;min-height:0"><canvas id="chRes"></canvas></div></div>
+`;
 
   const tipoLabels=Object.keys(tipoCount);
   makeChart('chTipo',{type:'bar',data:{labels:tipoLabels,datasets:[{data:tipoLabels.map(t=>tipoCount[t]),backgroundColor:tipoLabels.map(t=>TIPO_COLORS[t]||'#94a3b8')}]},options:{indexAxis:'y',plugins:{legend:{display:false},datalabels:badgeLabels((ctx)=>darkenColor(ctx.dataset.backgroundColor[ctx.dataIndex]),{anchor:'end',align:'right',offset:4})},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:10}}}}}});
@@ -1898,7 +2004,16 @@ function renderPersonPanel(cases){
   const panel=document.getElementById('personPanel');
   const corr=buildPersonCorrelations(cases);
   let filtered=corr;
-  if(personSearch){const s=personSearch.toLowerCase();filtered=filtered.filter(p=>p.identifier.includes(s))}
+  if(personSearch){
+    const s=personSearch.toLowerCase();
+    filtered=filtered.filter(p=>{
+      const cpfs = p.cpfs ? [...p.cpfs].join(' ') : '';
+      const emails = p.emails ? [...p.emails].join(' ') : '';
+      const base = String(p.identifier || '').toLowerCase();
+      const cpfFmt = p.cpfs ? [...p.cpfs].map(formatCPF).join(' ').toLowerCase() : '';
+      return base.includes(s) || cpfs.toLowerCase().includes(s) || cpfFmt.includes(s) || emails.toLowerCase().includes(s);
+    })
+  }
   
   // Função de ordenação genérica
   function sortPersons(a, b, field, dir) {
@@ -1945,11 +2060,11 @@ function renderPersonPanel(cases){
     <div><h3 class="chart-title" style="margin-bottom:0">Correlação por CPF / Pessoa</h3>
     <p class="subtitle" style="margin-top:0.25rem">${corr.length} pessoas · ${reincidentes.length} reincidentes · ${totalWithCoaf} com COAF · ${totalRecent} COAF &lt;6 meses</p></div>
     <div style="display:flex;gap:0.5rem">
-      <input type="text" class="filter-input" style="width:180px" placeholder="Buscar CPF..." value="${personSearch}" oninput="personSearch=this.value;renderAll()">
+      <input type="text" class="filter-input" style="width:180px" placeholder="Buscar CPF ou email..." value="${personSearch}" oninput="personSearch=this.value;renderAll()">
     </div></div>`;
   h+=`<div class="person-summary"><div class="mini-kpi"><div class="val">${corr.length}</div><div class="lbl">Pessoas</div></div><div class="mini-kpi"><div class="val" style="color:var(--risk-high)">${reincidentes.length}</div><div class="lbl">Reincidentes</div></div><div class="mini-kpi"><div class="val" style="color:var(--coaf)">${totalWithCoaf}</div><div class="lbl">Com COAF</div></div><div class="mini-kpi"><div class="val" style="color:var(--risk-med)">${totalRecent}</div><div class="lbl">COAF &lt;6m</div></div></div>`;
   h+=`<div class="table-wrap" style="max-height:360px;overflow-y:auto"><table class="data-table"><thead style="position:sticky;top:0;background:var(--card);z-index:5">
-    <th onclick="window.personSortField='identifier'; window.personSortDir=(window.personSortField==='identifier' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">CPF/Email${sortArrow('identifier')}</th>
+    <th onclick="window.personSortField='identifier'; window.personSortDir=(window.personSortField==='identifier' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">CPF + Email${sortArrow('identifier')}</th>
     <th onclick="window.personSortField='totalCases'; window.personSortDir=(window.personSortField==='totalCases' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Total${sortArrow('totalCases')}</th>
     <th onclick="window.personSortField='openCases'; window.personSortDir=(window.personSortField==='openCases' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Abertos${sortArrow('openCases')}</th>
     <th onclick="window.personSortField='closedCases'; window.personSortDir=(window.personSortField==='closedCases' && window.personSortDir==='asc')?'desc':'asc'; renderAll()">Encerrados${sortArrow('closedCases')}</th>
@@ -1963,11 +2078,16 @@ function renderPersonPanel(cases){
   
   showList.slice(0,100).forEach(p=>{
     const rClass=p.riskLevel==='Alto'?'badge-risk-high':p.riskLevel==='Médio'?'badge-risk-med':'badge-risk-low';
-    const displayId=p.type==='cpf'?formatCPF(p.identifier):p.identifier;
+    const cpfPrincipal = p.cpfs && p.cpfs.size ? [...p.cpfs][0] : (p.type==='cpf' ? p.identifier : null);
+    const emailPrincipal = p.emails && p.emails.size ? [...p.emails][0] : (p.type==='email' ? p.identifier : null);
+    const parts = [];
+    if (cpfPrincipal) parts.push(formatCPF(cpfPrincipal));
+    if (emailPrincipal) parts.push(emailPrincipal);
+    const displayId = parts.length ? parts.join(' · ') : p.identifier;
     const isExpanded = expandedPerson === p.identifier;
     
     h+=`<tr style="cursor:pointer" onclick="expandedPerson=expandedPerson==='${p.identifier}'?null:'${p.identifier}';renderAll()">
-      <td class="mono-id">${displayId}<\/td>
+      <td style="font-size:0.78rem;font-weight:500;color:var(--foreground)">${displayId}<\/td>
       <td style="font-weight:700">${p.totalCases}<\/td>
       <td><span class="badge badge-status-open">${p.openCases}<\/span><\/td>
       <td><span class="badge badge-status-done">${p.closedCases}<\/span><\/td>
@@ -2112,7 +2232,7 @@ document.addEventListener('DOMContentLoaded', () => {
   localStorage.setItem('theme', theme);
   applyTheme(theme);
   if (typeof applyChartThemeColors === 'function') { applyChartThemeColors(); }
-  try { renderAll(); } catch(e) {}
+  setTimeout(function() { try { renderAll(); } catch(e) {} }, 50);
 });
 })();
 
@@ -2174,6 +2294,14 @@ if (document.readyState === 'loading'){
 function switchTab(tabId) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
   document.querySelectorAll('.tab-content').forEach(content => content.classList.toggle('active', content.id === `tab-${tabId}`));
+  // Quando muda de aba, se os gráficos ficarem visíveis eles precisam calcular as larguras e alturas da tela
+  if (tabId === 'graficos') {
+    setTimeout(() => {
+      if (typeof chartInstances !== 'undefined') {
+        chartInstances.forEach(c => c.resize());
+      }
+    }, 50);
+  }
 }
 
 function bindTabs(){
