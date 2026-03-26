@@ -515,18 +515,18 @@ a:hover{color:var(--link-hover)}
 #dateFilters { margin-bottom: 1rem; }
 
 
-.trend-summary-title{font-size:1.05rem;font-weight:800;margin-bottom:.85rem;color:var(--foreground)}
+.trend-summary-title{font-size:0.82rem;font-weight:800;margin-bottom:.85rem;color:var(--foreground)}
 .trend-summary-list,.trend-mini-list{margin:0;padding-left:1.1rem;color:var(--foreground)}
-.trend-summary-list li,.trend-mini-list li{margin:.4rem 0;line-height:1.48}
+.trend-summary-list li,.trend-mini-list li{margin:.3rem 0;line-height:1.45;font-size:0.78rem}
 .trend-card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid var(--border);border-radius:16px;padding:1rem}
-.trend-card h3{margin:0 0 .65rem 0;font-size:.98rem}
-.trend-muted{color:var(--muted-fg);font-size:.78rem}
-.trend-badge-up,.trend-badge-down,.trend-badge-flat{display:inline-flex;align-items:center;gap:.35rem;padding:.18rem .5rem;border-radius:999px;font-size:.74rem;font-weight:800}
+.trend-card h3{margin:0 0 .5rem 0;font-size:0.82rem}
+.trend-muted{color:var(--muted-fg);font-size:.72rem}
+.trend-badge-up,.trend-badge-down,.trend-badge-flat{display:inline-flex;align-items:center;gap:.35rem;padding:.18rem .5rem;border-radius:999px;font-size:.68rem;font-weight:800}
 .trend-badge-up{background:var(--trend-badge-up-bg);color:var(--trend-badge-up-text);border:1px solid rgba(255,107,79,.28)}
 .trend-badge-down{background:var(--trend-badge-down-bg);color:var(--trend-badge-down-text);border:1px solid rgba(67,181,129,.28)}
 .trend-badge-flat{background:var(--trend-badge-flat-bg);color:var(--trend-badge-flat-text);border:1px solid rgba(232,181,55,.28)}
-.trend-section-title{font-size:.92rem;font-weight:800;margin-bottom:.75rem}
-.trend-callout{border-radius:12px;padding:.8rem .9rem;margin-top:.75rem;font-size:.82rem;line-height:1.45}
+.trend-section-title{font-size:0.82rem;font-weight:800;margin-bottom:.6rem}
+.trend-callout{border-radius:12px;padding:.65rem .85rem;margin-top:.65rem;font-size:0.75rem;line-height:1.42}
 .trend-callout.attention{background:rgba(255,107,79,.08);border:1px solid rgba(255,107,79,.28);color:#9b2a0a}
 .trend-callout.positive{background:rgba(67,181,129,.08);border:1px solid rgba(67,181,129,.28);color:#0a4d2a}
 [data-theme='dark'] .trend-callout.attention{color:#ffd9cf}
@@ -1539,12 +1539,22 @@ if (btnClear) {
       mst.style.display = 'none';
     }
 
-    const origOpts = JSON.parse(JSON.stringify(chart.config.options));
+    // Clonar data preservando funções nos datalabels de cada dataset
+    const origDatasets = chart.config.data.datasets.map(ds => ({
+      ...JSON.parse(JSON.stringify({ ...ds, datalabels: undefined })),
+      datalabels: ds.datalabels ? { ...ds.datalabels } : undefined,
+      backgroundColor: ds.backgroundColor,
+      borderColor: ds.borderColor,
+      pointBackgroundColor: ds.pointBackgroundColor
+    }));
+    const origOpts = chart.config.options;
     modalChart = new Chart(modalCanvas, {
       type: chart.config.type,
-      data: JSON.parse(JSON.stringify(chart.config.data)),
+      data: {
+        labels: [...chart.config.data.labels],
+        datasets: origDatasets
+      },
       options: {
-        ...origOpts,
         responsive: true,
         maintainAspectRatio: false,
         aspectRatio: null,
@@ -1553,18 +1563,14 @@ if (btnClear) {
           ...(origOpts.plugins || {}),
           legend: {
             position: 'bottom',
-            labels: {
-              font: { size: 12 },
-              padding: 20
-            }
-          },
-          datalabels: { ...(origOpts.plugins?.datalabels || {}), display: true }
+            labels: { font: { size: 12 }, padding: 20 }
+          }
         },
         scales: {
-          ...(chart.config.options.scales || {}),
-          x: { ...(chart.config.options.scales?.x || {}), ticks: { ...(chart.config.options.scales?.x?.ticks || {}), autoSkip: false, font: { size: 11 } } },
-          y: { ...(chart.config.options.scales?.y || {}), ticks: { ...(chart.config.options.scales?.y?.ticks || {}), font: { size: 12 } } },
-          ...(chart.config.options.scales?.y2 ? { y2: { ...chart.config.options.scales.y2 } } : {})
+          ...(origOpts.scales || {}),
+          x: { ...(origOpts.scales?.x || {}), ticks: { ...(origOpts.scales?.x?.ticks || {}), autoSkip: false, font: { size: 11 } } },
+          y: { ...(origOpts.scales?.y || {}), ticks: { ...(origOpts.scales?.y?.ticks || {}), font: { size: 12 } } },
+          ...(origOpts.scales?.y2 ? { y2: { ...origOpts.scales.y2 } } : {})
         },
         onClick(evt, elements) {
           if (!elements.length) return;
@@ -2122,7 +2128,7 @@ function renderMonthlyReport(cases) {
 
   const pldCard = document.createElement('div');
   pldCard.className = 'chart-card span-2';
-  pldCard.style.cssText = 'min-height:360px;display:flex;flex-direction:column;';
+  pldCard.style.cssText = 'min-height:560px;display:flex;flex-direction:column;';
   const pldTableRows = [
     {label:'Alto risco', bg:'hsl(217,45%,22%)', key:'alto'},
     {label:'Baixo risco', bg:'hsl(215,42%,50%)', key:'baixo'}
@@ -2134,7 +2140,7 @@ function renderMonthlyReport(cases) {
   pldCard.innerHTML = `
     <h3 class="chart-title">Alertas de PLD — Últimos 12 Meses (Alto x Baixo Risco)</h3>
     <div class="trend-muted" style="margin-bottom:.75rem">Volume mensal (Data Combinada), considerando alertas de PLD classificados como Alto ou Baixo risco.</div>
-    <div style="position:relative;flex:1;min-height:0"><canvas id="chMonthlyAlertPldRisk"></canvas></div>
+    <div style="position:relative;flex:1;min-height:420px"><canvas id="chMonthlyAlertPldRisk"></canvas></div>
     <div style="overflow-x:auto;margin-top:1rem">
       <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
         <thead><tr style="border-bottom:1px solid var(--border)">
@@ -2173,7 +2179,7 @@ function renderMonthlyReport(cases) {
       plugins: {
         legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 16 } },
         datalabels: {
-          display: true,
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
           borderRadius: 6,
           padding: { top: 2, right: 6, bottom: 2, left: 6 },
           font: { size: 11, weight: '700' },
@@ -2200,7 +2206,7 @@ function renderMonthlyReport(cases) {
   const sub = getLast12MonthsHighRiskSubtypes(cases);
   const subCard = document.createElement('div');
   subCard.className = 'chart-card span-2';
-  subCard.style.cssText = 'min-height:360px;display:flex;flex-direction:column;';
+  subCard.style.cssText = 'min-height:560px;display:flex;flex-direction:column;';
   const subRowsDef = [
     {label:'Depósitos 50k/Mês',   bg:'hsl(217,45%,22%)', key:'k50'},
     {label:'Depósitos 30k Unit.', bg:'hsl(38,55%,55%)',  key:'k30'},
@@ -2215,7 +2221,7 @@ function renderMonthlyReport(cases) {
   subCard.innerHTML = `
     <h3 class="chart-title">Alertas PLD (Alto Risco) por Subtipo — Últimos 12 Meses</h3>
     <div class="trend-muted" style="margin-bottom:.75rem">Distribuição mensal dos principais subtipos dentro de casos de alto risco.</div>
-    <div style="position:relative;flex:1;min-height:0"><canvas id="chMonthlySubtypes"></canvas></div>
+    <div style="position:relative;flex:1;min-height:420px"><canvas id="chMonthlySubtypes"></canvas></div>
     <div style="overflow-x:auto;margin-top:1rem">
       <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
         <thead><tr style="border-bottom:1px solid var(--border)">
@@ -2243,7 +2249,7 @@ function renderMonthlyReport(cases) {
       plugins:{
         legend:{position:'bottom',labels:{font:{size:11},padding:16}},
         datalabels:{
-          display: true,
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
           borderRadius: 6,
           padding: { top: 2, right: 6, bottom: 2, left: 6 },
           font:{size:10,weight:'700'},
@@ -2324,7 +2330,7 @@ function renderMonthlyReport(cases) {
           stack:'coaf',
           borderRadius:4,
           datalabels:{
-            display: true,
+            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
             borderRadius: 6,
             padding: { top: 2, right: 6, bottom: 2, left: 6 },
             font:{size:10,weight:'700'},
@@ -2341,7 +2347,7 @@ function renderMonthlyReport(cases) {
           stack:'coaf',
           borderRadius:4,
           datalabels:{
-            display: true,
+            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
             borderRadius: 6,
             padding: { top: 2, right: 6, bottom: 2, left: 6 },
             font:{size:10,weight:'700'},
@@ -2358,7 +2364,7 @@ function renderMonthlyReport(cases) {
           stack:'coaf',
           borderRadius:4,
           datalabels:{
-            display: true,
+            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
             borderRadius: 6,
             padding: { top: 2, right: 6, bottom: 2, left: 6 },
             font:{size:10,weight:'700'},
@@ -2375,7 +2381,7 @@ function renderMonthlyReport(cases) {
           stack:'coaf',
           borderRadius:4,
           datalabels:{
-            display: true,
+            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
             borderRadius: 6,
             padding: { top: 2, right: 6, bottom: 2, left: 6 },
             font:{size:11,weight:'700'},
@@ -2399,12 +2405,13 @@ function renderMonthlyReport(cases) {
           yAxisID:'y2',
           stack:undefined,
           datalabels:{
+            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
             color: '#1a3a0a',
             backgroundColor: '#e8f57a',
             borderRadius:6,
             padding:{top:2,right:6,bottom:2,left:6},
             font:{size:10,weight:'800'},
-            formatter:(v)=>v!=null?v.toFixed(1).replace('.',',')+'%':'',
+            formatter:(v)=>v!=null && v>0?v.toFixed(1).replace('.',',')+'%':'',
             anchor:'end',
             align:'top',
             offset:6,
@@ -2503,7 +2510,7 @@ function renderMonthlyReport(cases) {
       datasets:safraData.datasets.map(ds=>({
         ...ds,
         datalabels:{
-          display: true,
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
           borderRadius: 6,
           padding: { top: 2, right: 6, bottom: 2, left: 6 },
           font:{size:11,weight:'700'},
@@ -2524,7 +2531,7 @@ function renderMonthlyReport(cases) {
       plugins:{
         legend:{position:'bottom',labels:{font:{size:11},padding:16}},
         datalabels:{
-          display:true
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0
         }
       },
       responsive:true,
