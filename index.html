@@ -575,15 +575,10 @@ a:hover{color:var(--link-hover)}
     <div id="chartsGrid" class="charts-grid"></div>
 </div>
 <div id="tab-tendencias" class="tab-content">
-    <div id="trendFilters" class="filters" style="margin-bottom:1rem; display:flex; gap:1rem; align-items:center;">
-      <span class="subtitle">Analisar mês:</span>
-      <select id="trendMonthCurr" class="filter-select" onchange="window.trendCurrKey=this.value; renderTrendCards(applyFilters(allCases, filters))"></select>
-      <span class="subtitle">comparado com:</span>
-      <select id="trendMonthPrev" class="filter-select" onchange="window.trendPrevKey=this.value; renderTrendCards(applyFilters(allCases, filters))"></select>
+    <div class="chart-card" style="text-align: center; padding: 4rem 1rem; margin-top: 2rem;">
+        <h3 class="chart-title" style="font-size: 1.2rem;">📊 Inteligência Preditiva e Tendências</h3>
+        <p style="color: var(--muted-fg); font-size: 0.9rem; margin-top: 0.5rem;">Carregue uma planilha para visualizar as predições de backlog, fôlego da equipe e o resumo executivo.</p>
     </div>
-    <div id="trendSummaryCard" class="chart-card" style="margin-bottom:1rem"></div>
-    <div id="trendCardsGrid" class="kpi-grid" style="margin-bottom:1rem"></div>
-    <div id="trendListsGrid" class="charts-grid"></div>
 </div>
 <div id="tab-relatorio" class="tab-content">
     <div id="monthlyReportGrid" class="charts-grid"></div>
@@ -1654,6 +1649,15 @@ if (dataLoaded && allCases.length > 0) {
     dateTo: now.toISOString().slice(0,10)
   };
   renderAll();
+  // Forçar renderização da aba Tendências com todos os dados após definição completa do window.
+  setTimeout(function() {
+    if (typeof window.renderTrendCards === 'function' && allCases.length > 0) {
+      window.renderTrendCards(allCases);
+    }
+    if (typeof renderMonthlyReport === 'function' && allCases.length > 0) {
+      renderMonthlyReport(allCases);
+    }
+  }, 200);
 } else {
   document.getElementById('kpiGrid').innerHTML = '<div class="kpi-card"><div class="kpi-value" style="color:var(--muted-fg)">—</div><div class="kpi-label">Aguardando upload da planilha</div></div>';
   document.getElementById('chartsGrid').innerHTML = '<div class="chart-card"><h3 class="chart-title">Carregue uma planilha para visualizar os dados</h3></div>';
@@ -2602,8 +2606,8 @@ function renderAll(){
     document.getElementById('kpiGrid').innerHTML = '<div class="kpi-card"><div class="kpi-value" style="color:var(--muted-fg)">—</div><div class="kpi-label">Aguardando upload da planilha</div></div>';
     document.getElementById('chartsGrid').innerHTML = '<div class="chart-card"><h3 class="chart-title">Carregue uma planilha para visualizar os dados</h3></div>';
     updateComparisonCards([]);
-    renderTrendCards([]);
-    renderMonthlyReport([]);
+    // renderTrendCards verifica allCases internamente, não precisa chamar aqui
+    if (typeof renderMonthlyReport === 'function') renderMonthlyReport([]);
     return;
   }
   
@@ -2615,7 +2619,8 @@ function renderAll(){
   renderPersonPanel(filtered);
   renderTable(filtered);
   updateComparisonCards(filtered);
-  renderTrendCards(filtered);
+  // Tendências usa window.renderTrendCards com allCases completo, sem filtro de data
+  setTimeout(function(){ if(typeof window.renderTrendCards==='function') window.renderTrendCards(allCases); }, 50);
   renderMonthlyReport(allCases);
   document.getElementById('filtersSection').style.display='flex';
   document.getElementById('dateFilters').style.display='flex';
@@ -3207,13 +3212,16 @@ if (document.readyState === 'loading'){
 function switchTab(tabId) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
   document.querySelectorAll('.tab-content').forEach(content => content.classList.toggle('active', content.id === `tab-${tabId}`));
-  // Quando muda de aba, se os gráficos ficarem visíveis eles precisam calcular as larguras e alturas da tela
   if (tabId === 'graficos') {
     setTimeout(() => {
       if (typeof chartInstances !== 'undefined') {
         chartInstances.forEach(c => c.resize());
       }
     }, 50);
+  }
+  // Ao abrir aba Tendências, sempre renderizar com base completa (ignora filtro de datas)
+  if (tabId === 'tendencias' && typeof window.renderTrendCards === 'function' && allCases.length > 0) {
+    window.renderTrendCards(allCases);
   }
 }
 
@@ -3277,6 +3285,606 @@ ctx.fillStyle = foreground || '#e5e7eb';
   }
 });
 
+// ============================================================================
+// NOVO MÓDULO: TENDÊNCIAS PREDITIVAS E INTELIGÊNCIA EXECUTIVA (V FINAL)
+// ============================================================================
+
+window.trendTimeframe = window.trendTimeframe || 'month';
+
+function getAdvancedTrendKey(dateObj) {
+    if (!dateObj) return null;
+    const d = new Date(dateObj);
+    if (isNaN(d)) return null;
+    const y = d.getFullYear();
+    if (window.trendTimeframe === 'quarter') {
+        const q = Math.floor(d.getMonth() / 3) + 1;
+        return `${y}-Q${q}`;
+    }
+    return `${y}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getAdvancedTrendLabel(key) {
+    if (!key) return '';
+    if (key.includes('-Q')) {
+        const [y, q] = key.split('-Q');
+        return `${q}º Trimestre / ${y}`;
+    }
+    let [ano, mes] = key.split('-');
+    const nomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return `${nomes[parseInt(mes)-1]}/${ano}`;
+}
+
+window.renderTrendCards = function(cases) {
+    const trendTab = document.getElementById('tab-tendencias');
+    if (!trendTab) return;
+
+    // Se nâo carregou ainda allCases, sempre esconde e desenha tela vazia
+    // Usa sempre allCases (base completa), nunca o argumento `cases` que pode vir filtrado por data
+    if (!allCases || allCases.length === 0) {
+        trendTab.innerHTML = `
+            <div class="chart-card" style="text-align: center; padding: 4rem 1rem; margin-top: 2rem;">
+                <h3 class="chart-title" style="font-size: 1.2rem;">📊 Inteligência Preditiva e Tendências</h3>
+                <p style="color: var(--muted-fg); font-size: 0.9rem; margin-top: 0.5rem;">Carregue uma planilha para visualizar as predições de backlog, fôlego da equipe e o resumo executivo.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // A partir daqui GARANTIMOS que `allCases` TEM DADOS (planilha carregou e parseou)
+    // Desliga filtros de data globais para buscar as resoluções reais efetuadas nestes ciclos completos da base
+    const filterWithoutGlobalDates = { ...filters, dateFrom: '', dateTo: '' };
+    const scopeCases = typeof applyFilters === 'function' ? applyFilters(allCases, filterWithoutGlobalDates) : allCases;
+
+    // Pode acontecer de a planilha toda os itens estarem vazios em algum cenário muito específico, mas a checagem acima de allCases.length segura 99%
+    if (!scopeCases || scopeCases.length === 0) {
+        trendTab.innerHTML = `
+            <div class="chart-card" style="text-align: center; padding: 4rem 1rem; margin-top: 2rem;">
+                <h3 class="chart-title" style="font-size: 1.2rem;">📊 Inteligência Preditiva e Tendências</h3>
+                <p style="color: var(--muted-fg); font-size: 0.9rem; margin-top: 0.5rem;">Carregue uma planilha para visualizar as predições de backlog, fôlego da equipe e o resumo executivo.</p>
+            </div>
+        `;
+        return; // Para o código aqui até que subam os dados
+    }
+
+    // 2. CONSTRUÇÃO DA TELA NOVA QUANDO TEM DADOS
+    if (!document.getElementById('trendTimeframe')) {
+        trendTab.innerHTML = `
+            <div id="trendFilters" class="filters" style="margin-bottom:1rem; display:flex; gap:1rem; align-items:center; flex-wrap: wrap;">
+              <span class="subtitle">Agrupamento:</span>
+              <select id="trendTimeframe" class="filter-select" onchange="window.trendTimeframe=this.value; window.updateTrendDropdowns(); window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)">
+                  <option value="month" ${window.trendTimeframe === 'month' ? 'selected' : ''}>Mensal</option>
+                  <option value="quarter" ${window.trendTimeframe === 'quarter' ? 'selected' : ''}>Trimestral</option>
+              </select>
+              <span class="subtitle">Analisar Safra (Atual):</span>
+              <select id="trendMonthCurr" class="filter-select" onchange="window.trendCurrKey=this.value; window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)"></select>
+              <span class="subtitle">comparado com (Anterior):</span>
+              <select id="trendMonthPrev" class="filter-select" onchange="window.trendPrevKey=this.value; window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)"></select>
+              
+              <button class="filter-input" style="margin-left:auto; cursor:pointer;" onclick="window.copyTrendSummary()">📋 Copiar Resumo</button>
+            </div>
+            
+            <div id="trendSummaryCard" class="chart-card" style="margin-bottom:1rem; border-left: 4px solid var(--foreground);"></div>
+            <div id="trendForecastCard" class="chart-card" style="margin-bottom:1rem; border-left: 4px solid var(--coaf);"></div>
+            
+            <div id="trendCardsGrid" class="kpi-grid" style="margin-bottom:1rem"></div>
+            <div id="trendListsGrid" class="charts-grid" style="margin-bottom:1rem;"></div>
+            <div id="trendEfficiencyGrid" class="charts-grid"></div>
+            <div style="margin-bottom:3rem"></div>
+        `;
+        window.updateTrendDropdowns();
+    }
+
+    const currKey = window.trendCurrKey;
+    const prevKey = window.trendPrevKey;
+    if(!currKey || !prevKey) return;
+
+
+
+    let stats = {
+        curr: { entries: 0, resolved: 0, high: 0, breachedSla: 0, types: {}, ttrSum:0, ttrCount:0 },
+        prev: { entries: 0, resolved: 0, high: 0, breachedSla: 0, types: {}, ttrSum:0, ttrCount:0 },
+        history: {} 
+    };
+
+    const keysTimeline = [...new Set(allCases.map(c => getAdvancedTrendKey(getCombinedDate(c))).filter(Boolean))].sort();
+
+    scopeCases.forEach(c => {
+        const dtC = getCombinedDate(c);
+        if(!dtC) return;
+        
+        const keyEntry = getAdvancedTrendKey(dtC);
+        const keyRes = c.resolvido ? getAdvancedTrendKey(c.resolvido) : null;
+        
+        const isHigh = c.risco === 'Alto';
+        const isBreached = getSlaStatus(c) === 'breached';
+        const tipo = c.tipo || 'Outros';
+        
+        // Originação Mensal
+        if (keyEntry === currKey) {
+            stats.curr.entries++;
+            if(isHigh) stats.curr.high++;
+            stats.curr.types[tipo] = (stats.curr.types[tipo] || 0) + 1;
+            if (isBreached) stats.curr.breachedSla++;
+        }
+        if (keyEntry === prevKey) {
+            stats.prev.entries++;
+            if(isHigh) stats.prev.high++;
+            stats.prev.types[tipo] = (stats.prev.types[tipo] || 0) + 1;
+            if (isBreached) stats.prev.breachedSla++;
+        }
+
+        // Resoluções Mensais
+        if (keyRes === currKey) { stats.curr.resolved++; }
+        if (keyRes === prevKey) { stats.prev.resolved++; }
+
+        if (c.resolvido) {
+            let days = (new Date(c.resolvido).getTime() - new Date(dtC).getTime()) / 864e5;
+            if (days >= 0) {
+                if (keyRes === currKey) { stats.curr.ttrSum += days; stats.curr.ttrCount++; }
+                if (keyRes === prevKey) { stats.prev.ttrSum += days; stats.prev.ttrCount++; }
+            }
+        }
+
+        // Histórico Gráficos
+        if (!stats.history[keyEntry]) stats.history[keyEntry] = { entries:0, resolved:0, high:0, sla:0 };
+        stats.history[keyEntry].entries++;
+        if(isHigh) stats.history[keyEntry].high++;
+        if(isBreached) stats.history[keyEntry].sla++;
+        
+        if (keyRes) {
+            if (!stats.history[keyRes]) stats.history[keyRes] = { entries:0, resolved:0, high:0, sla:0 };
+            stats.history[keyRes].resolved++;
+        }
+    });
+
+    const calcVar = (curr, prev) => prev ? ((curr - prev) / prev * 100) : (curr ? 100 : 0);
+    const fPct = (val) => (val > 0 ? '+' : '') + val.toFixed(1).replace('.',',') + '%';
+    
+    const varEnt = calcVar(stats.curr.entries, stats.prev.entries);
+    const varRes = calcVar(stats.curr.resolved, stats.prev.resolved);
+    const varHigh = calcVar(stats.curr.high, stats.prev.high);
+    const slaCurrPct = stats.curr.entries ? (stats.curr.breachedSla / stats.curr.entries * 100) : 0;
+    const slaPrevPct = stats.prev.entries ? (stats.prev.breachedSla / stats.prev.entries * 100) : 0;
+    const varSla = slaCurrPct - slaPrevPct;
+    
+    const balance = stats.curr.entries - stats.curr.resolved;
+
+    const arrTipos = Object.keys({...stats.curr.types, ...stats.prev.types}).map(t => {
+        const c = stats.curr.types[t] || 0;
+        const p = stats.prev.types[t] || 0;
+        return { tipo: t, delta: c - p, pct: calcVar(c,p) };
+    });
+    const altas = arrTipos.filter(t => t.delta > 0).sort((a,b)=> b.delta - a.delta).slice(0,4);
+    const quedas = arrTipos.filter(t => t.delta < 0).sort((a,b)=> a.delta - b.delta).slice(0,4);
+
+    let impulsoText = altas.length ? `O impulsionamento nas entradas foi liderado pelos casos de <strong>${altas[0].tipo}</strong> (${fPct(altas[0].pct)}). ` : '';
+    let alivioText = quedas.length ? `Em contraposição, notou-se queda de demanda referente a <strong>${quedas[0].tipo}</strong> (${fPct(quedas[0].pct)}).` : '';
+
+    const isQuarter = window.trendTimeframe === 'quarter';
+    const labelCiclo = isQuarter ? 'trimestre analisado' : 'período analisado';
+    const nxtFrequencia = isQuarter ? 'casos/trimestre' : 'casos/mês';
+    const nxtCicloSingular = isQuarter ? 'trimestre' : 'mês';
+    const nxtCicloPlural = isQuarter ? 'trimestres' : 'meses';
+
+    document.getElementById('trendSummaryCard').innerHTML = `
+        <div class="trend-summary-title" style="margin-bottom:0.7rem; font-size:1.15rem;">Resumo Executivo (${getAdvancedTrendLabel(currKey)} vs ${getAdvancedTrendLabel(prevKey)})</div>
+        <div class="trend-summary-text" style="font-size:0.92rem; line-height:1.6; color:var(--foreground); margin-bottom: 0.5rem;">
+            No ${labelCiclo} (${getAdvancedTrendLabel(currKey)}), a entrada de novos alertas somou ${stats.curr.entries} casos (variação de <strong>${fPct(varEnt)}</strong>).
+            Já a capacidade resolutiva do período finalizou ${stats.curr.resolved} investigações de todas as safras correntes (variação de <strong>${fPct(varRes)}</strong> na performance da equipe).
+            Matematicamente, essa diferença significa ${balance > 0 ? `um <strong>acúmulo de +${balance} processos</strong> na fila existente` : `um <strong>amortecimento de ${Math.abs(balance)} processos</strong> sobre a fila de estoque existente`}.
+            <br><br>${impulsoText}${alivioText}
+        </div>
+        <div class="trend-alerts-box" style="margin-top: 1rem; display:flex; flex-direction:column; gap:0.5rem; font-size:0.85rem">
+            ${balance > 0 ? `<div style="color:var(--risk-med)">⚠️ <strong>Saturação Operacional:</strong> Entradas superam a capacidade, acelerando a formação de <strong>Backlog (casos vencidos)</strong>.</div>` : `<div style="color:var(--status-done)">✅ <strong>Contenção Saudável:</strong> Capacidade da equipe superior às entradas. Tendência de <strong>queda no estoque</strong> e consumo do Backlog.</div>`}
+            ${varEnt > 10 ? `<div style="color:var(--risk-high)">⚠️ <strong>Aceleração de Entradas:</strong> Pico acima de 10% na originação atritando a esteira SLA.</div>` : ''}
+            ${varHigh > 5 ? `<div style="color:var(--risk-high)">⚠️ <strong>Escalada Crítica:</strong> Casos ranqueados como Alto Risco cresceram ${fPct(varHigh)}.</div>` : ''}
+        </div>
+    `;
+
+    const projEnt = stats.curr.entries;
+    const projRes = stats.curr.resolved;
+    const projBalance = projEnt - projRes;
+    
+    let fcstText = '';
+    if (projBalance > 0) {
+        fcstText = `<span style="color:var(--foreground);"><strong>Modelagem Preditiva:</strong> Mantendo-se o ritmo transacional de ${getAdvancedTrendLabel(currKey)}, onde as entradas (${projEnt}) superam a capacidade (${projRes}), projeta-se um acúmulo sistêmico de aprox. <strong>+${projBalance} ${nxtFrequencia}</strong>. O <strong>Backlog (vencidos)</strong> passará por inflação no próximo ${nxtCicloSingular}.</span>`;
+    } else if (projBalance < 0) {
+        fcstText = `<span style="color:var(--foreground);"><strong>Modelagem Preditiva:</strong> O patamar resolutivo provado em ${getAdvancedTrendLabel(currKey)} (${projRes} finalizações) demonstra fôlego superior à originação (${projEnt} casos). A operação consolidará uma <strong>tendência contínua de queda</strong> no estoque (queima de aprox. <strong>-${Math.abs(projBalance)} ${nxtFrequencia}</strong>), garantindo a dissolução acelerada do <strong>Backlog</strong> nos próximos ${nxtCicloPlural}.</span>`;
+    } else {
+        fcstText = `<span style="color:var(--foreground);"><strong>Modelagem Preditiva:</strong> A operação demonstra equilíbrio em ${getAdvancedTrendLabel(currKey)} (Entradas: ${projEnt} vs Resoluções: ${projRes}). Projetando esta paridade, o estoque geral manterá estagnação.</span>`;
+    }
+
+    document.getElementById('trendForecastCard').innerHTML = `<div style="font-size:0.9rem;">${fcstText}</div><div style="font-size:0.75rem; color:var(--muted-fg); margin-top:0.5rem;">Cálculo projetado a partir da base temporal selecionada: ${getAdvancedTrendLabel(currKey)}.</div>`;
+
+    const histKeys6 = keysTimeline.filter(k => k <= currKey).slice(-6);
+    const dEnt = histKeys6.map(k => stats.history[k]?.entries||0);
+    const dRes = histKeys6.map(k => stats.history[k]?.resolved||0);
+    const dHigh = histKeys6.map(k => stats.history[k]?.high||0);
+    const dSla = histKeys6.map(k => stats.history[k]?.sla||0);
+
+    const sparkId = Math.random().toString(36).substring(7);
+    const s1 = 'sp1_'+sparkId, s2 = 'sp2_'+sparkId, s3 = 'sp3_'+sparkId, s4 = 'sp4_'+sparkId;
+
+    const sparkStyle = `height:45px; opacity:0.8;`; 
+    document.getElementById('trendCardsGrid').innerHTML = `
+        <div class="kpi-card" style="position:relative; overflow:hidden;" title="Safra: Total de alertas recém-originados (novos casos) recebidos pela esteira ao longo do período filtrado. Indica o volume bruto da demanda atual da operação.">
+            <div style="position:relative; z-index:2; cursor:help;">
+                <div class="kpi-label">Originação (Novos) ℹ️</div>
+                <div class="kpi-value" style="color:var(--foreground)">${stats.curr.entries} <span style="font-size:0.9rem; color:${varEnt>0?'var(--risk-high)':'var(--status-done)'}">${fPct(varEnt)}</span></div>
+            </div>
+            <div style="position:absolute; bottom:-4px; left:0; width:100%; ${sparkStyle}"><canvas id="${s1}"></canvas></div>
+        </div>
+        <div class="kpi-card" style="position:relative; overflow:hidden;" title="Produtividade (Capacity): Total de alertas concluídos e arquivados pela equipe no período, englobando TODAS AS SAFRAS (inclusive casos antigos que foram encerrados agora).">
+            <div style="position:relative; z-index:2; cursor:help;">
+                <div class="kpi-label">Produtividade Global (Time) ℹ️</div>
+                <div class="kpi-value" style="color:var(--foreground)">${stats.curr.resolved} <span style="font-size:0.9rem; color:${varRes>0?'var(--status-done)':'var(--risk-high)'}">${fPct(varRes)}</span></div>
+            </div>
+            <div style="position:absolute; bottom:-4px; left:0; width:100%; ${sparkStyle}"><canvas id="${s2}"></canvas></div>
+        </div>
+        <div class="kpi-card" style="position:relative; overflow:hidden;" title="Severidade Absoluta: Dos alertas originados (safra atual), quantos carregavam classificação ou matriz de 'Alto Risco'.">
+            <div style="position:relative; z-index:2; cursor:help;">
+                <div class="kpi-label">Risco (Altos Novos) ℹ️</div>
+                <div class="kpi-value" style="color:var(--foreground)">${stats.curr.high} <span style="font-size:0.9rem; color:${varHigh>0?'var(--risk-high)':'var(--status-done)'}">${fPct(varHigh)}</span></div>
+            </div>
+            <div style="position:absolute; bottom:-4px; left:0; width:100%; ${sparkStyle}"><canvas id="${s3}"></canvas></div>
+        </div>
+        <div class="kpi-card" style="position:relative; overflow:hidden;" title="Taxa de Quebra (Breach Rate): A porcentagem de casos pertencentes diretamente à SAFRA VIGENTE que extrapolaram a linha normativa SLA de controle.">
+            <div style="position:relative; z-index:2; cursor:help;">
+                <div class="kpi-label">Mortalidade (Backlog Formado) ℹ️</div>
+                <div class="kpi-value" style="color:var(--foreground)">${slaCurrPct.toFixed(1)}% <span style="font-size:0.9rem; color:${varSla>0?'var(--risk-high)':'var(--status-done)'}">${varSla>0?'+':''}${varSla.toFixed(1)}p.p.</span></div>
+            </div>
+             <div style="position:absolute; bottom:-4px; left:0; width:100%; ${sparkStyle}"><canvas id="${s4}"></canvas></div>
+        </div>
+    `;
+    
+    setTimeout(() => {
+        window.drawSparkline(s1, dEnt, '#fbbf24');
+        window.drawSparkline(s2, dRes, '#10b981');
+        window.drawSparkline(s3, dHigh, '#ef4444');
+        window.drawSparkline(s4, dSla, '#f43f5e');
+    }, 150);
+
+    const fList = (lista, colorTheme, bgTheme, icon) => {
+        if(!lista.length) return `<div class="trend-muted" style="padding:2rem 1rem; text-align:center;">Sem variações significativas no período.</div>`;
+        return `<div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">` + lista.map(item => {
+            const currVal = stats.curr.types[item.tipo] || 0;
+            const prevVal = stats.prev.types[item.tipo] || 0;
+            let contextStr = `De ${prevVal} para ${currVal} casos`;
+            if (prevVal === 0) contextStr = `Nova demanda: ${currVal} casos`;
+            else if (currVal === 0) contextStr = `Zeradø nesta safra (antes ${prevVal})`;
+
+            return `
+            <div style="padding: 0.85rem; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition: all 0.2s; border-radius: 8px; background: var(--card);" 
+                title="Auditar matriz de ${item.tipo}"
+                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.08)'" 
+                onmouseout="this.style.transform='none'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.05)'"
+                onclick="window.applyTrendDrilldown('${item.tipo}')">
+
+                <div>
+                    <div style="font-size:0.85rem; font-weight:700; color:var(--foreground)">
+                        ${item.tipo}
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--muted-fg); margin-top:0.2rem; display:flex; align-items:center;">
+                        ${contextStr} 
+                        <span style="opacity:0.6; margin-left:6px; display:inline-block; border-left:1px solid var(--border); padding-left:6px;">Filtrar ➔</span>
+                    </div>
+                </div>
+
+                <div style="text-align: right;">
+                    <div style="font-size:1.05rem; font-weight:800; color:${colorTheme};">
+                        ${icon} ${item.delta > 0 ? '+' : ''}${item.delta}
+                    </div>
+                    <div style="font-size:0.75rem; color:${colorTheme}; background:${bgTheme}; padding:0.15rem 0.4rem; border-radius:4px; display:inline-block; margin-top:0.3rem; font-weight: 600;">
+                        ${fPct(item.pct)}
+                    </div>
+                </div>
+            </div>
+            `}).join('') + `</div>`;
+    };
+
+    document.getElementById('trendListsGrid').innerHTML = `
+        <div class="chart-card">
+            <h3 class="chart-title" style="padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border); display:flex; align-items:center; gap:0.5rem;"><span style="background:var(--risk-high-bg); padding:4px 6px; border-radius:6px; font-size:1rem;">📈</span> Fatores de Impulso (Picos)</h3>
+            ${fList(altas, 'var(--risk-high)', 'var(--risk-high-bg)', '▲')}
+        </div>
+        <div class="chart-card">
+            <h3 class="chart-title" style="padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border); display:flex; align-items:center; gap:0.5rem;"><span style="background:var(--status-done-bg); padding:4px 6px; border-radius:6px; font-size:1rem;">📉</span> Fatores de Alívio (Quedas)</h3>
+            ${fList(quedas, 'var(--status-done)', 'var(--status-done-bg)', '▼')}
+        </div>
+    `;
+
+    let tmrCurr = stats.curr.ttrCount ? (stats.curr.ttrSum / stats.curr.ttrCount) : 0;
+    let tmrPrev = stats.prev.ttrCount ? (stats.prev.ttrSum / stats.prev.ttrCount) : 0;
+    let tmrVar = tmrPrev ? (((tmrCurr - tmrPrev) / tmrPrev) * 100) : 0;
+
+    // TMR Por Tipo para Gargalos (Ciclo Atual)
+    let typeSpeed = {};
+    if (typeof allCases !== 'undefined') {
+        const currResolved = allCases.filter(c => c.resolvido && getAdvancedTrendKey(c.resolvido) === currKey);
+        currResolved.forEach(c => {
+             const t = c.tipo || 'Outros';
+             if (!typeSpeed[t]) typeSpeed[t] = { sum: 0, count: 0 };
+             const diff = (new Date(c.resolvido).getTime() - new Date(getCombinedDate(c)).getTime()) / 864e5;
+             if (diff >= 0) { typeSpeed[t].sum += diff; typeSpeed[t].count++; }
+        });
+    }
+    const slowTipos = Object.keys(typeSpeed)
+        .map(k => ({ tipo: k, avg: typeSpeed[k].sum / typeSpeed[k].count, vol: typeSpeed[k].count }))
+        .filter(x => x.vol > 0)
+        .sort((a,b) => b.avg - a.avg).slice(0,4);
+
+    const calcMaxTmr = slowTipos.length ? slowTipos[0].avg : 1;
+
+    const gargalosHtml = slowTipos.length > 0 ? slowTipos.map(item => `
+        <div style="margin-bottom: 0.9rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem; font-size:0.8rem;">
+                <span style="font-weight:600; color:var(--foreground)">${item.tipo} <span style="color:var(--muted-fg); font-weight:normal; font-size:0.7rem">(${item.vol} analises)</span></span>
+                <span style="font-weight:bold; color:var(--risk-high)">${item.avg.toFixed(1)} dias</span>
+            </div>
+            <div style="width: 100%; background: var(--muted); border-radius: 4px; height: 6px; overflow:hidden;">
+                <div style="height: 100%; background: var(--risk-high); width: ${(item.avg / calcMaxTmr) * 100}%; border-radius: 4px;"></div>
+            </div>
+        </div>
+    `).join('') : '<div style="font-size:0.8rem; color:var(--muted-fg); padding:1rem; text-align:center;">Sem dados de resolução suficientes na safra.</div>';
+
+    document.getElementById('trendEfficiencyGrid').innerHTML = `
+        <div class="chart-card span-2" style="margin-top: 0.5rem; background: var(--card); padding: 1.5rem;">
+            <h3 class="chart-title" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed var(--border); padding-bottom: 0.75rem;">
+                <span style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="background:var(--muted); padding:4px 6px; border-radius:6px; font-size:1rem;">⏱️</span> 
+                    Eficiência e Complexidade Analítica
+                </span>
+                <span style="font-size:0.75rem; font-weight:normal; color:var(--muted-fg)">Medição Processual e Atrito na Esteira</span>
+            </h3>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem; margin-top: 1.5rem;">
+
+                <!-- Coluna Esquerda: Métricas macro de tempo e quebra -->
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+
+                    <div style="background: var(--muted); padding: 1.25rem 1rem; border-radius: 8px; border-left: 4px solid ${tmrVar > 10 ? 'var(--risk-high)' : (tmrVar < -10 ? 'var(--status-done)' : 'var(--foreground)')}; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:var(--muted-fg); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.3rem;">Tempo Médio Global (TMR)</div>
+                            <div style="font-weight:800; font-size:1.3rem; color:var(--foreground)">${tmrCurr.toFixed(1)} <span style="font-size:0.8rem; font-weight:normal; color:var(--muted-fg)">dias</span></div>
+                            <div style="font-size:0.75rem; color:var(--muted-fg); margin-top:0.2rem;">Período anterior: ${tmrPrev.toFixed(1)} dias</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-weight:bold; font-size:0.95rem; color: ${tmrVar > 0 ? 'var(--risk-high)' : 'var(--status-done)'}; background: ${tmrVar > 0 ? 'var(--risk-high-bg)' : 'var(--status-done-bg)'}; padding:0.2rem 0.5rem; border-radius:6px;">
+                                ${tmrVar > 0 ? '▲ Piorou' : '▼ Melhorou'} ${Math.abs(tmrVar).toFixed(1)}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--muted); padding: 1.25rem 1rem; border-radius: 8px; border-left: 4px solid ${varSla > 2 ? 'var(--risk-high)' : (varSla < -2 ? 'var(--status-done)' : 'var(--foreground)')}; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <div>
+                             <div style="font-size:0.75rem; font-weight:700; color:var(--muted-fg); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.3rem;">Taxa de Quebra (SLA Breach)</div>
+                            <div style="font-weight:800; font-size:1.3rem; color:var(--foreground)">${slaCurrPct.toFixed(1)}<span style="font-size:0.8rem; font-weight:normal; color:var(--muted-fg)">%</span></div>
+                            <div style="font-size:0.75rem; color:var(--muted-fg); margin-top:0.2rem;">Backlog atual fora do prazo</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-weight:bold; font-size:0.95rem; color: ${varSla > 0 ? 'var(--risk-high)' : 'var(--status-done)'}; background: ${varSla > 0 ? 'var(--risk-high-bg)' : 'var(--status-done-bg)'}; padding:0.2rem 0.5rem; border-radius:6px;">
+                                ${varSla > 0 ? '▲ Piorou' : '▼ Melhorou'} ${Math.abs(varSla).toFixed(1)}p.p.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:0.82rem; color:var(--muted-fg); background: var(--bg); padding:0.8rem; border-radius:6px; border: 1px solid var(--border);">
+                        💡 <strong>Insight Analítico:</strong> ${tmrVar > 5 ? 'Aumento no tempo indica fechamento de resoluções de maior complexidade (abertura de diligências) ou acúmulo sistêmico, gerando atrito na maturação.' : (tmrVar < -5 ? 'A redução de tempo revela maior agilidade no fluxo investigatório e vazão das anomalias. Desafogamento do backlog confirmada matematicamente.' : 'O processo permanece estável em tempo, sem detecção de novos gargalos ou estagnações na produtividade deste ciclo.')}
+                    </div>
+
+                </div>
+
+                <!-- Coluna Direita: Gargalos Top 3 em Barras Horizontais -->
+                <div style="display:flex; flex-direction:column; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                    <div style="font-size:0.85rem; font-weight:700; color:var(--foreground); padding: 1rem 1rem 0.5rem 1rem; border-bottom: 1px dashed var(--border); margin-bottom: 0.8rem;">
+                        🚨 Top Gargalos por Tipo (Investigações Longas)
+                    </div>
+                    <div style="padding: 0 1rem 1rem 1rem; flex:1; display:flex; flex-direction:column; justify-content:center;">
+                        ${gargalosHtml}
+                    </div>
+                    <div style="font-size:0.7rem; color:var(--muted-fg); background: var(--muted); padding: 0.6rem 1rem; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; text-align:center;">
+                        Representa o Tempo Médio (em dias) isolado das esteiras no ciclo analisado.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    `;
+};
+
+window.updateTrendDropdowns = function() {
+    const dCurr = document.getElementById('trendMonthCurr');
+    const dPrev = document.getElementById('trendMonthPrev');
+    if (!dCurr || !dPrev) return;
+    
+    // Removendo chamadas diretas com allCases e utilizando a versão filtrada ou global dinamicamente
+    const currentData = typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases;
+    
+    const availableKeys = [...new Set(currentData.map(c => getAdvancedTrendKey(getCombinedDate(c))).filter(Boolean))].sort().reverse();
+    const html = availableKeys.map(k => `<option value="${k}">${getAdvancedTrendLabel(k)}</option>`).join('');
+    dCurr.innerHTML = html;
+    dPrev.innerHTML = html;
+    
+    if (availableKeys.length > 0) {
+        dCurr.value = availableKeys[0];
+        window.trendCurrKey = availableKeys[0];
+        if (availableKeys.length > 1) {
+            dPrev.value = availableKeys[1];
+            window.trendPrevKey = availableKeys[1];
+        } else {
+            dPrev.value = availableKeys[0];
+            window.trendPrevKey = availableKeys[0];
+        }
+    }
+}
+
+window.applyTrendDrilldown = function(tipo) {
+    if(!filters) return;
+    filters.tipo = tipo;
+    filters.dateFrom = ''; 
+    filters.dateTo = '';
+    
+    if (typeof switchTab === 'function') switchTab('operacional');
+    if (typeof renderAll === 'function') renderAll();
+    
+    setTimeout(() => {
+        const tbl = document.getElementById('tablePanel');
+        if(tbl) tbl.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }, 150);
+}
+
+window.copyTrendSummary = function() {
+    const t1 = document.querySelector('.trend-summary-title')?.innerText || '';
+    const t2 = document.querySelector('.trend-summary-text')?.innerText || '';
+    const t3 = document.querySelector('.trend-alerts-box')?.innerText || '';
+    const fcst = document.getElementById('trendForecastCard')?.innerText || '';
+    
+    const clipText = `📊 ${t1}\n\n${t2}\n\n🚨 Alertas Executivos:\n${t3}\n\n${fcst}\n\n-- Dashboard PLD & FinCrime --`;
+    
+    navigator.clipboard.writeText(clipText).then(() => {
+        alert('✅ Resumo da Diretoria copiado com Sucesso!');
+    }).catch(e => alert('Erro no Clipboard.'));
+}
+
+window.drawSparkline = function(canvasId, dataPoints, strokeColor) {
+    if (typeof Chart === 'undefined') return;
+    const ctx = document.getElementById(canvasId);
+    if(!ctx) return;
+    
+    let existingIndex = chartInstances.findIndex(c => c.canvas.id === canvasId);
+    if (existingIndex > -1) {
+        chartInstances[existingIndex].destroy();
+        chartInstances.splice(existingIndex, 1);
+    }
+
+    const chartObj = new Chart(ctx, {
+        type: 'line',
+        data: { 
+            labels: dataPoints.map((_, i) => 'P-'+(dataPoints.length-i)), 
+            datasets: [{ 
+                data: dataPoints, 
+                borderColor: strokeColor, 
+                borderWidth: 2.5, 
+                tension: 0.3, 
+                pointRadius: 0,
+                fill: false
+            }] 
+        },
+        options: { 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend:{display:false}, tooltip:{enabled:false}, datalabels:{display:false} }, 
+            scales:{ x:{display:false}, y:{display:false, min:0} }, 
+            layout: { padding: 0 }
+        }
+    });
+    chartInstances.push(chartObj);
+}
+// ============================================================================
+
 </script>
-</body>
+<footer-watermark data-tess-watermark="1" style="position:fixed;right:12px;bottom:12px;z-index:2147483647"><div class="tess-wrap" aria-live="polite">
+  <a href="https://tess.pareto.io/" target="_blank" rel="noopener noreferrer" class="tess-tag" aria-label="Made with Tess">
+    <span class="tess-text">Made with</span>
+    <svg class="tess-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1986 542" fill="none">
+      <path d="M1.84122 234.485C2.5103 258.289 0.0171567 282.444 3.13957 305.906C6.77175 321.611 36.809 314.132 48.7889 313.4C97.1145 305.914 139.458 271.305 156.249 225.598C171.487 183.209 163.139 137.494 164.501 93.1716C164.565 77.9758 164.39 63.0743 164.716 47.8227C163.872 32.1097 171.383 3.9616 149.279 1.2168C102.993 -2.5941 49.6412 0.636019 19.1738 39.9464C-1.20154 64.3632 0.423388 96.7677 0.773863 126.841V127L1.83325 234.493L1.84122 234.485Z" fill="#F4F4F4"/>
+      <path d="M1.4599 364.947C1.56345 401.378 4.48673 436.487 25.5948 467.635C34.1018 480.85 44.4249 493.412 56.8189 503.118C70.2724 513.509 86.3305 521.592 101.919 528.235C120.263 535.817 140.001 539.191 159.619 540.201C180.17 541.379 202.314 541.57 223.493 540.838C259.56 540.074 291.326 533.995 316.672 506.683C330.189 492.107 341.293 475.105 344.399 455.08C348.804 429.613 342.559 405.403 328.062 384.129C314.553 364.422 292.991 350.086 270.505 342.225C263.129 339.783 253.347 337.961 246.226 337.476C219.869 337.125 117.539 337.507 53.123 337.348C41.5813 337.34 30.852 337.348 19.6766 337.348C16.0842 337.547 12.3485 336.815 9.31372 338.096C0.997915 342.734 1.42008 356.331 1.46787 364.804V364.963L1.4599 364.947Z" fill="#F4F4F4"/>
+      <path d="M541.251 306.783C540.582 282.979 543.075 258.824 539.953 235.362C536.32 219.657 506.283 227.136 494.303 227.868C445.978 235.354 403.634 269.963 386.843 315.67C371.605 358.059 379.953 403.774 378.591 448.096C378.527 463.292 378.703 478.194 378.376 493.445C379.22 509.158 371.709 537.306 393.813 540.051C440.091 543.87 493.451 540.64 523.918 501.322C544.286 476.905 542.661 444.5 542.31 414.435V414.276L541.251 306.783Z" fill="#F4F4F4"/>
+      <path d="M541.626 176.322C541.523 139.891 538.6 104.782 517.491 73.6342C508.985 60.4193 498.661 47.8569 486.267 38.1506C472.814 27.7602 456.756 19.6769 441.168 13.0337C422.824 5.4517 403.086 2.07837 383.467 1.06797C362.916 -0.109512 340.773 -0.300455 319.593 0.431493C283.526 1.19526 251.76 7.27361 226.415 34.5864C212.897 49.1617 201.794 66.1635 198.687 86.1887C194.282 111.656 200.527 135.866 215.024 157.14C228.533 176.847 250.095 191.183 272.582 199.044C279.957 201.486 289.739 203.308 296.86 203.794C323.217 204.144 425.548 203.762 489.963 203.921C501.505 203.929 512.234 203.921 523.41 203.921C527.002 203.722 530.738 204.454 533.773 203.173C542.088 198.535 541.666 184.938 541.618 176.465V176.306L541.626 176.322Z" fill="#F4F4F4"/>
+      <path d="M1346.08 331.633H1000.71C1001.31 403.224 1059.07 470.845 1131.7 476.045C1196.94 480.709 1251.73 449.696 1282.44 392.729L1331.08 416.682C1283.12 500.083 1192.62 544.362 1096.92 521.543C969.409 491.139 913.368 342.352 967.88 227.67C1009.68 139.733 1102.6 96.9629 1197.67 120.135C1290.64 142.793 1356.88 236.025 1346.07 331.644L1346.08 331.633ZM1289.41 280.283C1279.12 224.664 1234.82 179.487 1179.31 168.457C1116.57 155.983 1055.75 180.696 1022.7 235.437C1017.37 244.274 1005.73 268.376 1005.38 278.079C1005.34 279.395 1005.56 279.47 1006.58 280.283H1289.4H1289.41Z" fill="#F4F4F4"/>
+      <path d="M1983.37 239.636H1931.51C1929.11 234.811 1929.69 228.446 1928.31 222.508C1909.69 142.605 1737.59 148.286 1749.48 235.613C1755.42 279.261 1842.03 284.674 1876.45 293.65C1927.8 307.043 1976.49 330.504 1984.3 389.011C1998.94 498.719 1885.96 538.986 1795.88 524.03C1728.23 512.808 1676.94 462.656 1678.63 391.547H1729.95C1729.76 433.515 1758.03 462.741 1797.31 472.327C1843.08 483.506 1929.17 472.872 1933.09 412.386C1937.64 342.475 1835.75 339.137 1787.67 326.835C1742.78 315.345 1701.43 292.473 1696.93 241.101C1686.67 123.852 1825.3 91.3408 1912.43 131.405C1955.94 151.41 1982.31 191.506 1983.36 239.636H1983.37Z" fill="#F4F4F4"/>
+      <path d="M1402.21 391.545C1404.83 392.358 1403.54 399.386 1403.83 401.697C1413.01 474.817 1503.49 489.859 1561.28 467.243C1624.15 442.649 1621.84 372.021 1556.98 349.02C1491.48 325.795 1376.1 332.727 1369.55 238.072C1361.17 117.025 1516.76 87.9583 1600.47 139.694C1635.59 161.4 1657.24 198.96 1656.14 240.704C1655.76 241.238 1654.77 239.634 1654.55 239.634H1603.76C1603.27 176.313 1533.03 159.763 1481.64 168.268C1445.03 174.334 1403.72 211.691 1428.57 250.685C1446.71 279.141 1523.22 286.405 1555.87 295.563C1619.98 313.535 1667.01 347.897 1658.15 421.895C1647.79 508.452 1550.45 534.619 1476.13 525.108C1405.72 516.101 1351.27 464.965 1352.48 391.534H1402.2L1402.21 391.545Z" fill="#F4F4F4"/>
+      <path d="M775.088 0V119.817H936.548V173.307H775.088L775.045 392.122C776.778 429.373 787.449 463.563 827.482 473.384C864.811 482.542 903.379 470.153 936.548 453.593V510.292C919.162 516.272 901.84 522.573 883.47 525.119C796.078 537.219 726.992 495.358 723.774 402.767V173.307H628.598V120.887L723.763 119.817V0H775.088Z" fill="#F4F4F4"/>
+    </svg>
+  </a>
+
+  <span class="tess-tooltip" role="tooltip">
+    AI-generated (possibly user-edited) content - please verify carefully and submit no personal information. If you believe this content violates your rights or applicable laws, you may submit a report for review
+  </span>
+</div>
+  
+  <style>
+    .tess-wrap { position: relative; }
+
+    .tess-tag {
+      display: inline-flex;
+      align-items: center;
+      background-color: #1a1a1a;
+      color: white;
+      font-family: "Inter", Arial, sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 1;
+      border-radius: 999px;
+      padding: 6px 14px;
+      text-decoration: none;
+      gap: 8px;
+      transition: all 0.25s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      position: relative;
+    }
+  
+    .tess-tag:hover {
+      background-color: #000000;
+      transform: translateY(-1px);
+    }
+
+    .tess-tooltip {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      right: 0;
+      max-width: 360px;
+      width: max-content;
+      background: #fff;
+      color: #111;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font: 400 12px "Inter", Arial, sans-serif;
+      line-height: 1.45;
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      border: 1px solid rgba(0,0,0,.06);
+      text-align: left;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .2s ease, transform .2s ease;
+      pointer-events: auto;
+      z-index: 1000;
+    }
+
+    .tess-tooltip a { color: #111; text-decoration: underline; }
+
+    .tess-wrap:hover .tess-tooltip,
+    .tess-tag:focus + .tess-tooltip,
+    .tess-wrap:focus-within .tess-tooltip {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tess-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      right: 18px;
+      border: 8px solid transparent;
+      border-top-color: #fff;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,.08));
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .tess-tooltip { background:#2a2a2a; color:#f5f5f5; border-color: rgba(255,255,255,.08); }
+      .tess-tooltip a { color:#f5f5f5; }
+      .tess-tooltip::after { border-top-color:#2a2a2a; }
+    }
+  
+    .tess-logo {
+      height: 16px;
+      width: auto;
+      display: block;
+    }
+  
+    .tess-text {
+      opacity: 0.9;
+    }
+  </style>
+  </footer-watermark></body>
 </html>
