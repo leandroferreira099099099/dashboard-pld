@@ -620,7 +620,7 @@ a:hover{color:var(--link-hover)}
 <script>
 // ==================== CONSTANTES ====================
 const OPEN_STATUSES = ["Novo","Work in progress","Em Análise","Aguardando Retorno Diligências","Em Espera","Pendente","Comitê","Preparação","Aprovação","Aprovação Gestão Compliance"];
-const COAF_STATUSES = ["Comunicação COAF","Comunicado"];
+const COAF_STATUSES = ["Comunicação COAF","Comunicado","Comunicações ao COAF","Comunicações COAF"];
 const TIPO_COLORS = {
   'Alerta PLD':'hsl(215,35%,62%)',
   'KYP / Background Check':'hsl(38,45%,62%)',
@@ -835,7 +835,7 @@ function getSlaRefDate(c){
 }
 
 function getSlaRemainingDays(c){
-  if(!isOpen(c.status)) return null;
+  if(!isOpen(c.status) || isCoaf(c.status)) return null;
   if(c.tipo === "KYP Afiliados" && c.status === "Em Espera") return null; /* Remove do quadro de alertas! */
   
   const ref = getSlaRefDate(c);
@@ -865,7 +865,7 @@ function getSlaRemainingDays(c){
 }
 
 function getSlaStatus(c){
-  if(!isOpen(c.status)) return "resolved";
+  if(!isOpen(c.status) || isCoaf(c.status)) return "resolved";
   if(c.tipo === "KYP Afiliados" && c.status === "Em Espera") return "paused";
   const remaining = getSlaRemainingDays(c);
   if(remaining === null) return "ok";
@@ -1226,7 +1226,7 @@ function getSlaAlerts(cases){
   };
   
   cases.forEach(c => {
-    if(!isOpen(c.status)) return;
+    if(!isOpen(c.status) || isCoaf(c.status)) return;
     if(isCompleted(c.id)) return;
     
     const remaining = getSlaRemainingDays(c);
@@ -1283,7 +1283,7 @@ function renderSlaAlerts(cases){
       <div class="sla-alert-item ${c.remainingDays < 0 ? 'sla-critical' : (c.remainingDays <= 2 ? 'sla-warning' : '')}">
         <div style="flex:1; min-width:0">
           <a href="${JIRA_BASE_URL}${c.id}" target="_blank" class="mono-id" style="font-size:11px">${c.id}</a>
-          <div style="font-size:0.7rem; color:var(--muted-fg); margin-top:2px">${c.responsavel || 'Sem responsável'} | ${c.tipo}</div>
+          <div style="font-size:0.7rem; color:var(--muted-fg); margin-top:2px">${c.responsavel || 'Sem responsável'} | ${c.tipo} &bull; <span style='color:var(--foreground);font-style:italic'>${c.status}</span></div>
         </div>
         <div style="text-align:right">
           <span class="badge ${rBadge}" style="font-size:0.65rem">${c.risco}</span>
@@ -1304,7 +1304,7 @@ function renderSlaAlerts(cases){
       <div class="sla-alert-item sla-done-item">
         <div style="flex:1; min-width:0">
           <a href="${JIRA_BASE_URL}${c.id}" target="_blank" class="mono-id" style="font-size:11px">${c.id}</a>
-          <div style="font-size:0.7rem; color:var(--muted-fg); margin-top:2px">${c.responsavel || 'Sem responsável'} | ${c.tipo}</div>
+          <div style="font-size:0.7rem; color:var(--muted-fg); margin-top:2px">${c.responsavel || 'Sem responsável'} | ${c.tipo} &bull; <span style='color:var(--foreground);font-style:italic'>${c.status}</span></div>
         </div>
         <div style="text-align:right">
           <span class="badge ${rBadge}" style="font-size:0.65rem">${c.risco}</span>
