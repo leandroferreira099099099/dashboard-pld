@@ -5,9 +5,144 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard PLD & FinCrime</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+setTimeout(() => {
+  try {
+    if (!window.getMonthlyTrendData || !window.allCases) return;
+
+    const stats = getMonthlyTrendData(allCases);
+    const histKeys = Object.keys(stats.history || {}).sort();
+    const last3 = histKeys.slice(-3);
+
+    if (!last3.length) return;
+
+    const avgEntries = last3.reduce((a,k)=>a+(stats.history[k]?.entries||0),0)/last3.length;
+    const avgResolved = last3.reduce((a,k)=>a+(stats.history[k]?.resolved||0),0)/last3.length;
+
+    const prevKey = histKeys[histKeys.length-2];
+    const prevEntries = stats.history[prevKey]?.entries || 0;
+
+    const trend = avgEntries > prevEntries ? 'alta' : avgEntries < prevEntries ? 'queda' : 'estabilidade';
+    const projBalance = Math.round(avgEntries - avgResolved);
+
+    let leitura = 'equilíbrio';
+    if (projBalance > 0) leitura = 'acúmulo';
+    if (projBalance < 0) leitura = 'redução';
+
+    const el = document.getElementById('trendForecastCard');
+    if (!el) return;
+
+    el.innerHTML = `
+      <div style="font-size:0.9rem; line-height:1.5;">
+        <strong>Projeção Operacional Baseada em Tendência</strong><br><br>
+        Tendência de <strong>${trend}</strong> nas entradas.<br><br>
+        Média: <strong>${Math.round(avgEntries)}</strong> entradas vs 
+        <strong>${Math.round(avgResolved)}</strong> resoluções.<br><br>
+        Projeção:<br>
+        • Entradas: ~${Math.round(avgEntries)}<br>
+        • Resoluções: ~${Math.round(avgResolved)}<br>
+        • Backlog: <strong>${projBalance > 0 ? '+' : ''}${projBalance}</strong><br><br>
+        <strong>Leitura:</strong> ${leitura} de backlog.
+      </div>
+    `;
+  } catch(e) {
+    console.warn('forecast safe error', e);
+  }
+}, 800);
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js">
+setTimeout(() => {
+  try {
+    if (!window.getMonthlyTrendData || !window.allCases) return;
+
+    const stats = getMonthlyTrendData(allCases);
+    const histKeys = Object.keys(stats.history || {}).sort();
+    const last3 = histKeys.slice(-3);
+
+    if (!last3.length) return;
+
+    const avgEntries = last3.reduce((a,k)=>a+(stats.history[k]?.entries||0),0)/last3.length;
+    const avgResolved = last3.reduce((a,k)=>a+(stats.history[k]?.resolved||0),0)/last3.length;
+
+    const prevKey = histKeys[histKeys.length-2];
+    const prevEntries = stats.history[prevKey]?.entries || 0;
+
+    const trend = avgEntries > prevEntries ? 'alta' : avgEntries < prevEntries ? 'queda' : 'estabilidade';
+    const projBalance = Math.round(avgEntries - avgResolved);
+
+    let leitura = 'equilíbrio';
+    if (projBalance > 0) leitura = 'acúmulo';
+    if (projBalance < 0) leitura = 'redução';
+
+    const el = document.getElementById('trendForecastCard');
+    if (!el) return;
+
+    el.innerHTML = `
+      <div style="font-size:0.9rem; line-height:1.5;">
+        <strong>Projeção Operacional Baseada em Tendência</strong><br><br>
+        Tendência de <strong>${trend}</strong> nas entradas.<br><br>
+        Média: <strong>${Math.round(avgEntries)}</strong> entradas vs 
+        <strong>${Math.round(avgResolved)}</strong> resoluções.<br><br>
+        Projeção:<br>
+        • Entradas: ~${Math.round(avgEntries)}<br>
+        • Resoluções: ~${Math.round(avgResolved)}<br>
+        • Backlog: <strong>${projBalance > 0 ? '+' : ''}${projBalance}</strong><br><br>
+        <strong>Leitura:</strong> ${leitura} de backlog.
+      </div>
+    `;
+  } catch(e) {
+    console.warn('forecast safe error', e);
+  }
+}, 800);
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0">
+setTimeout(() => {
+  try {
+    if (!window.getMonthlyTrendData || !window.allCases) return;
+
+    const stats = getMonthlyTrendData(allCases);
+    const histKeys = Object.keys(stats.history || {}).sort();
+    const last3 = histKeys.slice(-3);
+
+    if (!last3.length) return;
+
+    const avgEntries = last3.reduce((a,k)=>a+(stats.history[k]?.entries||0),0)/last3.length;
+    const avgResolved = last3.reduce((a,k)=>a+(stats.history[k]?.resolved||0),0)/last3.length;
+
+    const prevKey = histKeys[histKeys.length-2];
+    const prevEntries = stats.history[prevKey]?.entries || 0;
+
+    const trend = avgEntries > prevEntries ? 'alta' : avgEntries < prevEntries ? 'queda' : 'estabilidade';
+    const projBalance = Math.round(avgEntries - avgResolved);
+
+    let leitura = 'equilíbrio';
+    if (projBalance > 0) leitura = 'acúmulo';
+    if (projBalance < 0) leitura = 'redução';
+
+    const el = document.getElementById('trendForecastCard');
+    if (!el) return;
+
+    el.innerHTML = `
+      <div style="font-size:0.9rem; line-height:1.5;">
+        <strong>Projeção Operacional Baseada em Tendência</strong><br><br>
+        Tendência de <strong>${trend}</strong> nas entradas.<br><br>
+        Média: <strong>${Math.round(avgEntries)}</strong> entradas vs 
+        <strong>${Math.round(avgResolved)}</strong> resoluções.<br><br>
+        Projeção:<br>
+        • Entradas: ~${Math.round(avgEntries)}<br>
+        • Resoluções: ~${Math.round(avgResolved)}<br>
+        • Backlog: <strong>${projBalance > 0 ? '+' : ''}${projBalance}</strong><br><br>
+        <strong>Leitura:</strong> ${leitura} de backlog.
+      </div>
+    `;
+  } catch(e) {
+    console.warn('forecast safe error', e);
+  }
+}, 800);
+
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -92,6 +227,16 @@ main{padding:1.5rem 0}main>*+*{margin-top:1.5rem}
 .tab-btn.active svg{stroke:white}
 .tab-content{display:none}
 .tab-content.active{display:block}
+.sub-tabs-container{display:flex;gap:0.5rem;margin-bottom:1.5rem;border-bottom:2px solid var(--border);padding-bottom:0}
+.sub-tab-btn{appearance:none;border:1px solid transparent;border-bottom:none;background:transparent;color:var(--muted-fg);padding:.55rem 1rem;border-radius:6px 6px 0 0;font-size:0.8rem;font-weight:600;cursor:pointer;margin-bottom:-2px;transition:all .18s ease}
+.sub-tab-btn:hover{background:var(--muted);color:var(--foreground)}
+.sub-tab-btn.active{background:hsl(217,45%,30%);color:#fff;border-color:hsl(217,35%,26%)}
+.sub-tab-content{display:none}
+.sub-tab-content.active{display:block}
+.kyp-chart-filter{display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--muted-fg);margin-bottom:0.75rem;flex-wrap:wrap}
+.kyp-chart-filter label{font-weight:600;white-space:nowrap}
+.kyp-chart-filter select{height:28px;border:1px solid var(--border);border-radius:6px;padding:0 0.5rem;font-size:0.75rem;background:var(--card);color:var(--foreground);outline:none;cursor:pointer}
+.kyp-chart-filter select:focus{border-color:var(--link-color)}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem margin-bottom: 2rem !important;}
 .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;text-align:center;transition:transform .18s ease, box-shadow .18s ease}
 .kpi-card:hover{transform:translateY(-2px) scale(1.02)}
@@ -532,7 +677,53 @@ a:hover{color:var(--link-hover)}
 [data-theme='dark'] .trend-callout.attention{color:#ffd9cf}
 [data-theme='dark'] .trend-callout.positive{color:#d6ffe1}
 
-</style>
+.kyp-toolbar{box-shadow:0 1px 2px rgba(0,0,0,0.04);} </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+setTimeout(() => {
+  try {
+    if (!window.getMonthlyTrendData || !window.allCases) return;
+
+    const stats = getMonthlyTrendData(allCases);
+    const histKeys = Object.keys(stats.history || {}).sort();
+    const last3 = histKeys.slice(-3);
+
+    if (!last3.length) return;
+
+    const avgEntries = last3.reduce((a,k)=>a+(stats.history[k]?.entries||0),0)/last3.length;
+    const avgResolved = last3.reduce((a,k)=>a+(stats.history[k]?.resolved||0),0)/last3.length;
+
+    const prevKey = histKeys[histKeys.length-2];
+    const prevEntries = stats.history[prevKey]?.entries || 0;
+
+    const trend = avgEntries > prevEntries ? 'alta' : avgEntries < prevEntries ? 'queda' : 'estabilidade';
+    const projBalance = Math.round(avgEntries - avgResolved);
+
+    let leitura = 'equilíbrio';
+    if (projBalance > 0) leitura = 'acúmulo';
+    if (projBalance < 0) leitura = 'redução';
+
+    const el = document.getElementById('trendForecastCard');
+    if (!el) return;
+
+    el.innerHTML = `
+      <div style="font-size:0.9rem; line-height:1.5;">
+        <strong>Projeção Operacional Baseada em Tendência</strong><br><br>
+        Tendência de <strong>${trend}</strong> nas entradas.<br><br>
+        Média: <strong>${Math.round(avgEntries)}</strong> entradas vs 
+        <strong>${Math.round(avgResolved)}</strong> resoluções.<br><br>
+        Projeção:<br>
+        • Entradas: ~${Math.round(avgEntries)}<br>
+        • Resoluções: ~${Math.round(avgResolved)}<br>
+        • Backlog: <strong>${projBalance > 0 ? '+' : ''}${projBalance}</strong><br><br>
+        <strong>Leitura:</strong> ${leitura} de backlog.
+      </div>
+    `;
+  } catch(e) {
+    console.warn('forecast safe error', e);
+  }
+}, 800);
+
+</script>
 </head>
 <body>
 <header>
@@ -581,7 +772,16 @@ a:hover{color:var(--link-hover)}
     </div>
 </div>
 <div id="tab-relatorio" class="tab-content">
-    <div id="monthlyReportGrid" class="charts-grid"></div>
+    <div class="sub-tabs-container">
+        <button class="sub-tab-btn active" type="button" data-subtab="relatorio-pld">PLD Mensal</button>
+        <button class="sub-tab-btn" type="button" data-subtab="relatorio-kyp">KYP Afiliados</button>
+    </div>
+    <div id="sub-tab-relatorio-pld" class="sub-tab-content active">
+        <div id="monthlyReportGrid" class="charts-grid"></div>
+    </div>
+    <div id="sub-tab-relatorio-kyp" class="sub-tab-content">
+        <div id="kypReportGrid" class="charts-grid"></div>
+    </div>
 </div>
   <footer>Desenvolvido por Leandro Ferreira (2026) — Uso interno</footer>
 </main>
@@ -1079,12 +1279,13 @@ function detectSubtipoPLD(resumo, tipo){
 function parseWorkbook(wb){
   const results=[];
   for(const name of wb.SheetNames){
-    const rows=XLSX.utils.sheet_to_json(wb.Sheets[name]);
+    const sheet = wb.Sheets[name];
+    const rows = XLSX.utils.sheet_to_json(sheet);
     for(const row of rows){
       const id=String(row["Código"]||row["Chave"]||row["Key"]||row["Issue key"]||"").trim();
       if(!id)continue;
       const tipo=normTipo(String(row["Tipo de item"]||row["Issue Type"]||row["Tipo"]||""));
-      
+
     let riscoRaw = "";
     if (tipo === "Alerta PLD") {
       riscoRaw =
@@ -1100,12 +1301,32 @@ function parseWorkbook(wb){
         "";
     }
     const risco = normRisco(riscoRaw);
-     
+
  const emailP = String(
   row["Email"] ??
   row["Custom field (Email)"] ??
   ""
  ).trim().toLowerCase() || null;
+
+    const rowNum = row.__rowNum__ !== undefined ? (row.__rowNum__ + 1) : null;
+    let colI = "", colJ = "";
+    if(rowNum !== null) {
+      const cellI = sheet['I' + rowNum];
+      const cellJ = sheet['J' + rowNum];
+      colI = cellI ? String(cellI.w || cellI.v || "").trim() : "";
+      colJ = cellJ ? String(cellJ.w || cellJ.v || "").trim() : "";
+    }
+
+    // Dynamic fallback to find named columns if they shifted
+    for(const k of Object.keys(row)) {
+        const lowerK = k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if(lowerK === 'coluna i' || lowerK.includes('status do kyp') || lowerK.includes('status kyp')) {
+            colI = String(row[k] || "").trim() || colI;
+        }
+        if(lowerK === 'coluna j' || lowerK.includes('desfecho') || lowerK.includes('conclusao do kyp')) {
+            colJ = String(row[k] || "").trim() || colJ;
+        }
+    }
 
  const transPld=parseDate(row["Data da Transação (PLD)"]||row["Data Transação PLD"]||row["Data Transação - PLD"]||row["Data Transacao PLD"]||row["Data da Transacao (PLD)"]||row["Data Transação"]||row["Transaction Date"]||row["Trans Date"]||row["Custom field (Data da Transação (PLD))"]||row["Custom field (Data Transação PLD)"]||null);
       results.push({
@@ -1118,7 +1339,9 @@ function parseWorkbook(wb){
         responsavel:row["Responsável"]?String(row["Responsável"]).trim():row["Assignee"]?String(row["Assignee"]).trim():null,
         status:String(row["Status"]||"").trim(), tipo, risco, data_transacao_pld:transPld,
         subtipo_pld: detectSubtipoPLD(String(row["Resumo"]||row["Summary"]||"").trim(), tipo),
-  emailP,
+        emailP,
+        colunaI: colI,
+        colunaJ: colJ
       });
     }
   }
@@ -1506,6 +1729,7 @@ if (btnClear) {
   });
 
   function openChartInModal(e) {
+  if (e.target.closest('select')) return;
     const card = e.target.closest('.chart-card');
     if (!card) return;
     const canvas = card.querySelector('canvas');
@@ -1609,6 +1833,8 @@ if (btnClear) {
   // Listener para monthlyReportGrid (Relatório Mensal)
   const mg = document.getElementById('monthlyReportGrid');
   if (mg) mg.addEventListener('click', openChartInModal);
+  const kypg = document.getElementById('kypReportGrid');
+  if (kypg) kypg.addEventListener('click', openChartInModal);
 }
 
 document.addEventListener('DOMContentLoaded', setupChartModal);
@@ -1655,7 +1881,9 @@ if (dataLoaded && allCases.length > 0) {
       window.renderTrendCards(allCases);
     }
     if (typeof renderMonthlyReport === 'function' && allCases.length > 0) {
-      renderMonthlyReport(allCases);
+      const filterSummary = { ...filters, dateFrom: '', dateTo: '' };
+      renderMonthlyReport(applyFilters(allCases, filterSummary));
+  renderKypReport(applyFilters(allCases, filterSummary));
     }
   }, 200);
 } else {
@@ -1996,10 +2224,14 @@ function balanceCurrentLabel(v){
 
 
 
-function getLast12MonthsAlertPldRisk(cases) {
+function getLast12MonthsAlertPldRisk(cases, nMonths=12, endMonthKey=null) {
   const now = new Date();
+  if (endMonthKey) {
+    const [y, m] = endMonthKey.split("-");
+    now.setFullYear(parseInt(y), parseInt(m)-1, 1);
+  }
   const months = [];
-  for(let i=11; i>=0; i--){
+  for(let i=nMonths-1; i>=0; i--){
     const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
     const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
     const label = String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
@@ -2022,10 +2254,14 @@ function getLast12MonthsAlertPldRisk(cases) {
   return months.map(m=>({...m,total:m.alto+m.baixo}));
 }
 
-function getLast12MonthsHighRiskSubtypes(cases){
+function getLast12MonthsHighRiskSubtypes(cases, nMonths=12, endMonthKey=null){
   const now = new Date();
+  if (endMonthKey) {
+    const [y, m] = endMonthKey.split("-");
+    now.setFullYear(parseInt(y), parseInt(m)-1, 1);
+  }
   const months = [];
-  for(let i=11;i>=0;i--){
+  for(let i=nMonths-1;i>=0;i--){
     const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
     const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     const label = String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
@@ -2048,10 +2284,14 @@ function getLast12MonthsHighRiskSubtypes(cases){
 }
 
 
-function getLast12MonthsCoafIndex(cases){
+function getLast12MonthsCoafIndex(cases, nMonths=12, endMonthKey=null){
   const now = new Date();
+  if (endMonthKey) {
+    const [y, m] = endMonthKey.split("-");
+    now.setFullYear(parseInt(y), parseInt(m)-1, 1);
+  }
   const months = [];
-  for(let i=11;i>=0;i--){
+  for(let i=nMonths-1;i>=0;i--){
     const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
     const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     const label = String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2);
@@ -2091,7 +2331,7 @@ function getLast12MonthsCoafIndex(cases){
 }
 
 
-function getSafraConcluidaData(cases){
+function getSafraConcluidaData(cases, endMonthKey=null){
   // Only Alerta PLD, concluded (not open, not COAF)
   const concluded = cases.filter(c =>
     c.tipo === 'Alerta PLD' &&
@@ -2115,7 +2355,22 @@ function getSafraConcluidaData(cases){
   });
 
   // Sort conclusion months, take last 6
-  const conclusionMonths = [...conclusionMap.keys()].sort().slice(-3);
+  
+  // Sort conclusion months, filter by endMonthKey, and take last 3
+  let conclusionMonths = [...conclusionMap.keys()].sort();
+  if (endMonthKey && conclusionMonths.includes(endMonthKey)) {
+      conclusionMonths = conclusionMonths.filter(k => k <= endMonthKey);
+  } else if (endMonthKey) {
+      // Just filter logically strings 'yyyy-mm'
+      conclusionMonths = conclusionMonths.filter(k => k <= endMonthKey);
+  } else {
+      // If no explicit end month, drop the very current month to only get closed ones
+      const now = new Date();
+      const currentMonthKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+      conclusionMonths = conclusionMonths.filter(k => k < currentMonthKey);
+  }
+  conclusionMonths = conclusionMonths.slice(-3);
+
 
   // Collect all origin months referenced
   const allOriginKeys = new Set();
@@ -2166,6 +2421,436 @@ function getSafraConcluidaData(cases){
   };
 }
 
+
+
+function getLast12MonthsKypRisk(cases) {
+  const now = new Date();
+  const months = [];
+  for(let i=11; i>=0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    const label = String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+    months.push({key, label, alto:0, baixo:0, medio:0});
+  }
+  const map = new Map(months.map(m => [m.key, m]));
+
+  cases.forEach(c => {
+    if(c.tipo !== 'KYP Afiliados') return;
+    const ref = getCombinedDate(c);
+    if(!ref) return;
+    const key = monthKeyFromDate(ref);
+    if(!key || !map.has(key)) return;
+
+    const bucket = map.get(key);
+    if(c.risco === 'Alto') bucket.alto++;
+    else if(c.risco === 'Médio' || c.risco === 'M\u00e9dio' || c.risco === 'Medio') bucket.medio++;
+    else bucket.baixo++;
+  });
+  return months.map(m=>({...m,total:m.alto+m.medio+m.baixo}));
+}
+
+
+function getDiasUteisDecorridosParaDatas(inicio, fim) {
+  let diasUteis = 0;
+  const current = new Date(inicio);
+  while (current < fim) {
+    current.setDate(current.getDate() + 1);
+    if (isDiaUtil(current)) {
+      diasUteis++;
+    }
+  }
+  return diasUteis;
+}
+
+function getVolumeKyp12Meses(cases, nMonths=12, endMonthKey=null) {
+  nMonths = nMonths || 12;
+  const now = new Date();
+  if (endMonthKey) {
+    const [y, m] = endMonthKey.split("-");
+    now.setFullYear(parseInt(y), parseInt(m)-1, 1);
+  }
+  const months = [];
+  for (let i = nMonths - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const names = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    const label = names[d.getMonth()] + '/' + String(d.getFullYear()).slice(2);
+    months.push({ key, label, concluido: 0, emAnalise: 0, aguardandoIncremento: 0 });
+  }
+  const map = new Map(months.map(m => [m.key, m]));
+
+  cases.forEach(c => {
+    if (c.tipo !== 'KYP Afiliados') return;
+    const ref = getCombinedDate(c);
+    if (!ref) return;
+    const key = monthKeyFromDate(ref);
+    if (!key || !map.has(key)) return;
+    const bucket = map.get(key);
+    const colI = (c.colunaI || c.status || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const colJ = (c.colunaJ || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (colI.includes('conclu') || colI === 'closed' || colI === 'done' || colI === 'resolved' ||
+        colJ.includes('nao seguir') || colJ.includes('reprovado')) {
+      bucket.concluido++;
+    } else if ((c.status || '').trim() === 'Em Espera' || colI.includes('espera') || colI.includes('aguardando incremento')) {
+      bucket.aguardandoIncremento++;
+    } else {
+      bucket.emAnalise++;
+    }
+  });
+
+  return months.map(m => ({ ...m, total: m.concluido + m.emAnalise + m.aguardandoIncremento }));
+}
+
+function getAnalisesMesXSLA(cases, monthKey) {
+  const now = new Date();
+  const curKey = monthKey || (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
+
+  const buckets = {
+    aprovados: { menosUm: 0, umDia: 0, doisDias: 0, maisDois: 0 },
+    rejeitados: { menosUm: 0, umDia: 0, doisDias: 0, maisDois: 0 }
+  };
+
+  cases.forEach(c => {
+    if (c.tipo !== 'KYP Afiliados') return;
+    const colI = (c.colunaI || c.status || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const colJ = (c.colunaJ || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const isConcluido = colI.includes('conclu') || colI === 'closed' || colI === 'done' || colI === 'resolved';
+    const isRejeitado = colJ.includes('nao seguir') || colJ.includes('reprovado') || colI.includes('reprovado');
+    if (!isConcluido && !isRejeitado) return;
+
+    const conclusionDate = c.resolvido || c.atualizado;
+    if (!conclusionDate) return;
+    const conclusionKey = monthKeyFromDate(conclusionDate);
+    if (conclusionKey !== curKey) return;
+
+    const criacao = new Date(getCombinedDate(c) || conclusionDate);
+    const solucao = new Date(conclusionDate);
+    criacao.setHours(0, 0, 0, 0);
+    solucao.setHours(0, 0, 0, 0);
+    const dias = getDiasUteisDecorridosParaDatas(criacao, solucao);
+
+    const group = isRejeitado ? buckets.rejeitados : buckets.aprovados;
+    if (dias === 0) group.menosUm++;
+    else if (dias === 1) group.umDia++;
+    else if (dias === 2) group.doisDias++;
+    else group.maisDois++;
+  });
+
+  return buckets;
+}
+
+function getAnalisesMesXSafra(cases, monthKey) {
+  const now = new Date();
+  const curKey = monthKey || (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
+  const names = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const fmtKey = k => { const [y, m] = k.split('-'); return names[parseInt(m)-1] + '/' + String(y).slice(2); };
+
+  const safraMap = new Map();
+
+  cases.forEach(c => {
+    if (c.tipo !== 'KYP Afiliados') return;
+    const colI = (c.colunaI || c.status || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const colJ = (c.colunaJ || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const isConcluido = colI.includes('conclu') || colI === 'closed' || colI === 'done' || colI === 'resolved';
+    const isRejeitado = colJ.includes('nao seguir') || colJ.includes('reprovado') || colI.includes('reprovado');
+    if (!isConcluido && !isRejeitado) return;
+
+    const conclusionDate = c.resolvido || c.atualizado;
+    if (!conclusionDate) return;
+    const conclusionKey = monthKeyFromDate(conclusionDate);
+    if (conclusionKey !== curKey) return;
+
+    const originKey = monthKeyFromDate(getCombinedDate(c)) || curKey;
+    if (!safraMap.has(originKey)) safraMap.set(originKey, { aprovados: 0, rejeitados: 0 });
+    const bucket = safraMap.get(originKey);
+    if (isRejeitado) bucket.rejeitados++;
+    else bucket.aprovados++;
+  });
+
+  const sortedKeys = [...safraMap.keys()].sort();
+  return sortedKeys.map(k => ({ safra: 'Safra ' + fmtKey(k), aprovados: safraMap.get(k).aprovados, rejeitados: safraMap.get(k).rejeitados }));
+}
+
+function renderKypReport(cases) {
+  const grid = document.getElementById('kypReportGrid');
+  if(!grid) return;
+  if(!cases || cases.length === 0){
+    grid.innerHTML = '<div class="chart-card"><h3 class="chart-title">KYP Afiliados</h3><div class="trend-muted">Nenhum dado disponível.</div></div>';
+    return;
+  }
+
+  // ── Construir lista de meses disponíveis a partir dos dados KYP ──────────
+  const _kypMonthsSet = new Set();
+  cases.forEach(c => {
+    if (c.tipo !== 'KYP Afiliados') return;
+    const ref = c.resolvido || c.atualizado || getCombinedDate(c);
+    if (!ref) return;
+    const k = monthKeyFromDate(ref);
+    if (k) _kypMonthsSet.add(k);
+  });
+  const _kypMonthsSorted = [..._kypMonthsSet].sort().reverse(); // mais recente primeiro
+  const _kypMonthNames = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const _fmtMK = k => { if(!k) return ''; const [y,m] = k.split('-'); return _kypMonthNames[parseInt(m)-1]+'/'+String(y).slice(2); };
+
+  // Inicializar seleções se ainda não definidas
+  if (!window.kypState) window.kypState = { volPeriod: 12, endMonth: null, slaMonth: null, safraMonth: null };
+  if (!window.kypState.slaMonth && _kypMonthsSorted.length > 0) window.kypState.slaMonth = _kypMonthsSorted[0];
+  if (!window.kypState.safraMonth && _kypMonthsSorted.length > 0) window.kypState.safraMonth = _kypMonthsSorted[0];
+
+  const _monthOptions = (selected) => _kypMonthsSorted.map(k =>
+    `<option value="${k}" ${k === selected ? 'selected' : ''}>${_fmtMK(k)}</option>`
+  ).join('');
+
+  
+  const _monthOptionsKyp = (selected) => {
+      let opts = '<option value="">Mês Atual (Automático)</option>';
+      opts += _kypMonthsSorted.map(k =>
+        `<option value="${k}" ${k === selected ? 'selected' : ''}>${_fmtMK(k)}</option>`
+      ).join('');
+      return opts;
+  };
+
+  const kypFilterHeader = document.createElement('div');
+  kypFilterHeader.className = '';
+  kypFilterHeader.style.cssText = `display:inline-flex;align-items:center;gap:0.75rem;padding:0.4rem 0.6rem;margin-bottom:0.75rem;background:var(--card);border:1px solid var(--border);border-radius:8px;width:fit-content;margin-left:auto;`;
+  kypFilterHeader.innerHTML = `
+  <div style="font-size:0.75rem;color:var(--muted-fg);font-weight:500;">Filtros de análise KYP</div>
+  <div style="display:flex;gap:0.75rem;align-items:center;">
+    <div style="display:flex;gap:0.35rem;align-items:center;">
+      <span class="subtitle">Mês:</span>
+      <select onclick="event.stopPropagation()" class="filter-select" onchange="window.kypState.endMonth=this.value; window.kypState.slaMonth=this.value; window.kypState.safraMonth=this.value; window._reRenderKyp&&window._reRenderKyp()">
+        ${_monthOptionsKyp(window.kypState.endMonth)}
+      </select>
+    </div>
+    <div style="display:flex;gap:0.35rem;align-items:center;">
+      <span class="subtitle">Período:</span>
+      <select onclick="event.stopPropagation()" class="filter-select" onchange="window.kypState.volPeriod=parseInt(this.value); window._reRenderKyp&&window._reRenderKyp()">
+        <option value="3" ${window.kypState.volPeriod===3?'selected':''}>3M</option>
+        <option value="6" ${window.kypState.volPeriod===6?'selected':''}>6M</option>
+        <option value="12" ${window.kypState.volPeriod===12?'selected':''}>12M</option>
+      </select>
+    </div>
+  </div>
+`;
+  grid.innerHTML = '';
+  const kypToolbarWrapper = document.createElement('div');
+kypToolbarWrapper.style.display='flex';
+kypToolbarWrapper.style.justifyContent='flex-end';
+kypToolbarWrapper.style.width='100%';
+kypToolbarWrapper.appendChild(kypFilterHeader);
+grid.appendChild(kypToolbarWrapper);
+
+
+
+  // Registrar função de re-render para ser chamada pelos filtros
+  window._reRenderKyp = () => {
+    const _f = Object.assign({}, filters, { dateFrom: '', dateTo: '' });
+    renderKypReport(applyFilters(allCases, _f));
+  };
+
+  // ── GRÁFICO 1 NOVO: Volume de KYP 12 Meses ───────────────────────────────
+  const vol12 = getVolumeKyp12Meses(cases, window.kypState.volPeriod, window.kypState.endMonth);
+  const volCard = document.createElement('div');
+  volCard.className = 'chart-card span-2';
+  volCard.style.cssText = 'min-height:480px;display:flex;flex-direction:column;margin-top:1.5rem;position:relative;';
+  const vol12TableRows = [
+    {label:'Concluído',         bg:'hsl(217,45%,18%)', key:'concluido'},
+    {label:'Em análise',        bg:'hsl(215,30%,68%)', key:'emAnalise'},
+    {label:'Aguardando Incremento', bg:'hsl(38,60%,68%)', key:'aguardandoIncremento'}
+  ].map(row=>`<tr>
+    <td style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:${row.bg};display:inline-block"></span>${row.label}</td>
+    ${vol12.map(s=>`<td style="text-align:center">${s[row.key]>0?s[row.key]:''}</td>`).join('')}
+  </tr>`).join('');
+  const vol12TotalRow = `<tr style="font-weight:700;border-top:2px solid var(--border)"><td>Total Geral</td>${vol12.map(s=>`<td style="text-align:center">${s.total||''}</td>`).join('')}</tr>`;
+  volCard.innerHTML = `
+    <div style="margin-top:0.5rem"></div>
+    <h3 class="chart-title">Volume de KYP ${window.kypState.volPeriod} Meses</h3>
+    <div class="trend-muted" style="margin-bottom:.75rem">Volume mensal de KYP Afiliados por status: Concluído, Em análise e Aguardando Incremento.</div>
+    <div style="position:relative;flex:1;min-height:320px"><canvas id="chKypVol12"></canvas></div>
+    <div style="overflow-x:auto;margin-top:1rem">
+      <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:4px 8px;font-weight:600"></th>
+          ${vol12.map(s=>`<th style="text-align:center;padding:4px 8px;font-weight:600">${s.label}</th>`).join('')}
+        </tr></thead>
+        <tbody style="font-size:0.72rem">${vol12TableRows}${vol12TotalRow}</tbody>
+      </table>
+    </div>
+  `;
+  grid.appendChild(volCard);
+
+  makeChart('chKypVol12', {
+    type: 'bar',
+    data: {
+      labels: vol12.map(s => s.label),
+      datasets: [
+        { label: 'Concluído',             data: vol12.map(s => s.concluido),             backgroundColor: 'hsl(217,45%,18%)', borderRadius: 4, stack: 'vol', order: 2 },
+        { label: 'Em análise',            data: vol12.map(s => s.emAnalise),             backgroundColor: 'hsl(215,30%,68%)', borderRadius: 4, stack: 'vol', order: 2 },
+        { label: 'Aguardando Incremento', data: vol12.map(s => s.aguardandoIncremento), backgroundColor: 'hsl(38,60%,68%)',  borderRadius: 4, stack: 'vol', order: 2 },
+        { label: 'Total Geral', data: vol12.map(s => s.total),
+          type: 'line', borderColor: 'hsl(48,100%,45%)', backgroundColor: 'hsl(48,100%,45%)',
+          borderWidth: 2, pointRadius: 5, pointHoverRadius: 7, fill: false, order: 1, yAxisID: 'y' }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 16 } },
+        datalabels: {
+          display: (ctx) => ctx.dataset.type !== 'line' && ctx.dataset.data[ctx.dataIndex] > 0,
+          borderRadius: 6, padding: { top: 2, right: 6, bottom: 2, left: 6 },
+          font: { size: 10, weight: '700' }, formatter: (v) => v > 0 ? v : '',
+          anchor: 'center', align: 'center',
+          backgroundColor: 'hsla(0,0%,0%,0.28)', color: '#f1f5f9'
+        }
+      },
+      responsive: true, maintainAspectRatio: false,
+      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+    }
+  });
+
+  // ── GRÁFICO 2 NOVO: Análises do Mês x SLA ────────────────────────────────
+  const nowDate = new Date();
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const _slaMK = window.kypState.slaMonth;
+  const curMonthName = _slaMK
+    ? (_kypMonthNames[parseInt(_slaMK.split('-')[1])-1] + '/' + _slaMK.split('-')[0].slice(2)).replace(/^./,c=>c.toUpperCase())
+    : monthNames[nowDate.getMonth()];
+
+  const slaData = getAnalisesMesXSLA(cases, _slaMK);
+  const slaLabels = ['Menos de um dia útil', 'Um dia útil', 'Dois dias úteis', 'Mais de dois dias'];
+  const slaApr = [slaData.aprovados.menosUm, slaData.aprovados.umDia, slaData.aprovados.doisDias, slaData.aprovados.maisDois];
+  const slaRej = [slaData.rejeitados.menosUm, slaData.rejeitados.umDia, slaData.rejeitados.doisDias, slaData.rejeitados.maisDois];
+  const slaTotApr = slaApr.reduce((a,b)=>a+b,0);
+  const slaTotRej = slaRej.reduce((a,b)=>a+b,0);
+
+  const slaCard = document.createElement('div');
+  slaCard.className = 'chart-card';
+  slaCard.style.cssText = 'min-height:420px;display:flex;flex-direction:column;margin-top:1.5rem;position:relative;';
+  const slaCols = ['Aprovados','Rejeitados'];
+  const slaTableRows = slaLabels.map((lbl,i)=>`<tr>
+    <td>${lbl}</td>
+    <td style="text-align:center">${slaApr[i]||''}</td>
+    <td style="text-align:center">${slaRej[i]||''}</td>
+  </tr>`).join('');
+  const slaTotalRow = `<tr style="font-weight:700;border-top:2px solid var(--border)"><td>Total Analisado no mês</td><td style="text-align:center">${slaTotApr}</td><td style="text-align:center">${slaTotRej}</td></tr>`;
+  slaCard.innerHTML = `
+    <div class="kyp-chart-filter">
+      <label>Mês:</label>
+      <select onclick="event.stopPropagation()" onchange="window.kypState.slaMonth=this.value; window._reRenderKyp&&window._reRenderKyp()">${_monthOptions(_slaMK)}</select>
+    </div>
+    <h3 class="chart-title" style="text-align:center;text-transform:uppercase;text-decoration:underline;">Análises Realizadas em ${curMonthName} x SLA</h3>
+    <div style="position:relative;flex:1;min-height:260px"><canvas id="chKypMesSLA"></canvas></div>
+    <div style="overflow-x:auto;margin-top:1rem">
+      <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:4px 8px;font-weight:600"></th>
+          ${slaCols.map(c=>`<th style="text-align:center;padding:4px 8px;font-weight:600">${c}</th>`).join('')}
+        </tr></thead>
+        <tbody style="font-size:0.72rem">${slaTableRows}${slaTotalRow}</tbody>
+      </table>
+    </div>
+  `;
+  grid.appendChild(slaCard);
+
+  makeChart('chKypMesSLA', {
+    type: 'bar',
+    data: {
+      labels: ['Aprovados', 'Rejeitados'],
+      datasets: [
+        { label: 'Dois dias úteis',       data: [slaData.aprovados.doisDias, slaData.rejeitados.doisDias],   backgroundColor: 'hsl(217,72%,50%)', borderRadius: 4, stack: 'sla' },
+        { label: 'Mais de dois dias',     data: [slaData.aprovados.maisDois, slaData.rejeitados.maisDois],   backgroundColor: 'hsl(60,80%,82%)',  borderRadius: 4, stack: 'sla' },
+        { label: 'Um dia útil',           data: [slaData.aprovados.umDia, slaData.rejeitados.umDia],         backgroundColor: 'hsl(197,55%,40%)', borderRadius: 4, stack: 'sla' },
+        { label: 'Menos de um dia útil',  data: [slaData.aprovados.menosUm, slaData.rejeitados.menosUm],     backgroundColor: 'hsl(197,55%,25%)', borderRadius: 4, stack: 'sla' }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+          borderRadius: 6, padding: { top: 2, right: 6, bottom: 2, left: 6 },
+          font: { size: 11, weight: '700' }, formatter: (v) => v > 0 ? v : '',
+          anchor: 'center', align: 'center',
+          backgroundColor: 'hsla(0,0%,0%,0.30)', color: '#f1f5f9'
+        }
+      },
+      responsive: true, maintainAspectRatio: false,
+      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+    }
+  });
+
+  // ── GRÁFICO 3 NOVO: Análises do Mês x Safra ──────────────────────────────
+  const _safraMK = window.kypState.safraMonth;
+  const safraData = getAnalisesMesXSafra(cases, _safraMK);
+  const safraCard = document.createElement('div');
+  safraCard.className = 'chart-card';
+  safraCard.style.cssText = 'min-height:420px;display:flex;flex-direction:column;margin-top:1.5rem;position:relative;';
+
+  const SAFRA_COLORS = ['hsl(215,20%,72%)','hsl(217,45%,45%)','hsl(75,70%,48%)','hsl(38,80%,60%)','hsl(263,45%,60%)','hsl(197,55%,50%)'];
+  const safraAprData = safraData.map(s => s.aprovados);
+  const safraRejData = safraData.map(s => s.rejeitados);
+  const safraTotApr = safraAprData.reduce((a,b)=>a+b,0);
+  const safraTotRej = safraRejData.reduce((a,b)=>a+b,0);
+  const safraTableRows = safraData.map((s,i)=>`<tr>
+    <td style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:${SAFRA_COLORS[i%SAFRA_COLORS.length]};display:inline-block"></span>${s.safra}</td>
+    <td style="text-align:center">${s.aprovados||''}</td>
+    <td style="text-align:center">${s.rejeitados||''}</td>
+  </tr>`).join('');
+  const safraTotalRow = `<tr style="font-weight:700;border-top:2px solid var(--border)"><td>Total Analisado no mês</td><td style="text-align:center">${safraTotApr}</td><td style="text-align:center">${safraTotRej}</td></tr>`;
+
+  const _safraMonthLabel = _safraMK ? _fmtMK(_safraMK) : curMonthName;
+  safraCard.innerHTML = `
+    <div class="kyp-chart-filter">
+      <label>Mês:</label>
+      <select onclick="event.stopPropagation()" onchange="window.kypState.safraMonth=this.value; window._reRenderKyp&&window._reRenderKyp()">${_monthOptions(_safraMK)}</select>
+    </div>
+    <h3 class="chart-title" style="text-align:center;text-transform:uppercase;text-decoration:underline;">Análises Realizadas em ${_safraMonthLabel} x Safra</h3>
+    <div style="position:relative;flex:1;min-height:260px"><canvas id="chKypMesSafra"></canvas></div>
+    <div style="overflow-x:auto;margin-top:1rem">
+      <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:4px 8px;font-weight:600"></th>
+          <th style="text-align:center;padding:4px 8px;font-weight:600">Aprovados</th>
+          <th style="text-align:center;padding:4px 8px;font-weight:600">Rejeitados</th>
+        </tr></thead>
+        <tbody style="font-size:0.72rem">${safraTableRows}${safraTotalRow}</tbody>
+      </table>
+    </div>
+  `;
+  grid.appendChild(safraCard);
+
+  if (safraData.length > 0) {
+    makeChart('chKypMesSafra', {
+      type: 'bar',
+      data: {
+        labels: ['Aprovados', 'Rejeitados'],
+        datasets: safraData.map((s, i) => ({
+          label: s.safra,
+          data: [s.aprovados, s.rejeitados],
+          backgroundColor: SAFRA_COLORS[i % SAFRA_COLORS.length],
+          borderRadius: 4,
+          stack: 'safra'
+        }))
+      },
+      options: {
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
+          datalabels: {
+            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+            borderRadius: 6, padding: { top: 2, right: 6, bottom: 2, left: 6 },
+            font: { size: 11, weight: '700' }, formatter: (v) => v > 0 ? v : '',
+            anchor: 'center', align: 'center',
+            backgroundColor: 'hsla(0,0%,0%,0.30)', color: '#f1f5f9'
+          }
+        },
+        responsive: true, maintainAspectRatio: false,
+        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+      }
+    });
+  }
+}
+
+
 function renderMonthlyReport(cases) {
   const grid = document.getElementById('monthlyReportGrid');
   if(!grid) return;
@@ -2174,7 +2859,63 @@ function renderMonthlyReport(cases) {
     return;
   }
 
-  const series = getLast12MonthsAlertPldRisk(cases);
+  grid.innerHTML = '';
+
+  // State and Re-render
+  if (!window.pldState) window.pldState = { volPeriod: 12, endMonth: null };
+  window._reRenderPld = () => {
+    const _f = Object.assign({}, filters, { dateFrom: '', dateTo: '' });
+    renderMonthlyReport(typeof applyFilters === 'function' ? applyFilters(allCases, _f) : allCases);
+  };
+
+  const _pldMonthsSet = new Set();
+  cases.forEach(c => {
+    if (c.tipo !== 'Alerta PLD') return;
+    const ref = typeof getCombinedDate === 'function' ? getCombinedDate(c) : null;
+    if (!ref) return;
+    const k = typeof monthKeyFromDate === 'function' ? monthKeyFromDate(ref) : null;
+    if (k) _pldMonthsSet.add(k);
+  });
+  const _pldMonthsSorted = [..._pldMonthsSet].sort().reverse();
+  const _pldMonthNames = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const _fmtPldMK = k => { if(!k) return ''; const [y,m] = k.split('-'); return _pldMonthNames[parseInt(m)-1]+'/'+String(y).slice(2); };
+
+  const _monthOptionsPld = (selected) => {
+      let opts = '<option value="">Mês Atual (Automático)</option>';
+      opts += _pldMonthsSorted.map(k =>
+        `<option value="${k}" ${k === selected ? 'selected' : ''}>${_fmtPldMK(k)}</option>`
+      ).join('');
+      return opts;
+  };
+
+  const pldFilterHeader = document.createElement('div');
+  pldFilterHeader.className = '';
+  pldFilterHeader.style.cssText = `display:inline-flex;align-items:center;gap:0.75rem;padding:0.4rem 0.6rem;margin-bottom:0.75rem;background:var(--card);border:1px solid var(--border);border-radius:8px;width:fit-content;margin-left:auto;`;
+  pldFilterHeader.innerHTML = `
+      <span class="subtitle" style="margin-right:-0.5rem;">Mês Final:</span>
+      <select onclick="event.stopPropagation()" class="filter-select" onchange="window.pldState.endMonth=this.value; window._reRenderPld&&window._reRenderPld()">
+         ${_monthOptionsPld(window.pldState.endMonth)}
+      </select>
+      <span class="subtitle" style="margin-left:0.5rem; margin-right:-0.5rem;">Período:</span>
+      <select onclick="event.stopPropagation()" class="filter-select" onchange="window.pldState.volPeriod=parseInt(this.value); window._reRenderPld&&window._reRenderPld()">
+         <option value="3" ${window.pldState.volPeriod===3?'selected':''}>Últimos 3 meses</option>
+         <option value="6" ${window.pldState.volPeriod===6?'selected':''}>Últimos 6 meses</option>
+         <option value="12" ${window.pldState.volPeriod===12?'selected':''}>Últimos 12 meses</option>
+      </select>
+  `;
+  grid.innerHTML = '';
+  const pldToolbarWrapper = document.createElement('div');
+pldToolbarWrapper.style.display='flex';
+pldToolbarWrapper.style.justifyContent='flex-end';
+pldToolbarWrapper.style.width='100%';
+pldToolbarWrapper.appendChild(pldFilterHeader);
+grid.appendChild(pldToolbarWrapper);
+
+  // Use the variables
+  const nMonths = window.pldState.volPeriod;
+  const endMonthKey = window.pldState.endMonth;
+
+  const series = getLast12MonthsAlertPldRisk(cases, nMonths, endMonthKey);
 
   const pldCard = document.createElement('div');
   pldCard.className = 'chart-card span-2';
@@ -2188,7 +2929,7 @@ function renderMonthlyReport(cases) {
   </tr>`).join('');
   const pldTotalRow = `<tr style="font-weight:700;border-top:2px solid var(--border)"><td>Total</td>${series.map(s=>`<td style="text-align:center">${s.total}</td>`).join('')}</tr>`;
   pldCard.innerHTML = `
-    <h3 class="chart-title">Alertas de PLD — Últimos 12 Meses (Alto x Baixo Risco)</h3>
+    <h3 class="chart-title">Alertas de PLD — ${nMonths} Meses (Alto x Baixo Risco)</h3>
     <div class="trend-muted" style="margin-bottom:.75rem">Volume mensal (Data Combinada), considerando alertas de PLD classificados como Alto ou Baixo risco.</div>
     <div style="position:relative;flex:1;min-height:420px"><canvas id="chMonthlyAlertPldRisk"></canvas></div>
     <div style="overflow-x:auto;margin-top:1rem">
@@ -2201,7 +2942,6 @@ function renderMonthlyReport(cases) {
       </table>
     </div>
   `;
-  grid.innerHTML = '';
   grid.appendChild(pldCard);
 
   makeChart('chMonthlyAlertPldRisk', {
@@ -2253,7 +2993,7 @@ function renderMonthlyReport(cases) {
   });
 
   // Second chart: high risk subtypes
-  const sub = getLast12MonthsHighRiskSubtypes(cases);
+  const sub = getLast12MonthsHighRiskSubtypes(cases, nMonths, endMonthKey);
   const subCard = document.createElement('div');
   subCard.className = 'chart-card span-2';
   subCard.style.cssText = 'min-height:560px;display:flex;flex-direction:column;';
@@ -2269,7 +3009,7 @@ function renderMonthlyReport(cases) {
   </tr>`).join('');
   const subTotalRow = `<tr style="font-weight:700;border-top:2px solid var(--border)"><td>Total</td>${sub.map(s=>`<td style="text-align:center">${(s.k50+s.k30+s.passagem+s.pep)||''}</td>`).join('')}</tr>`;
   subCard.innerHTML = `
-    <h3 class="chart-title">Alertas PLD (Alto Risco) por Subtipo — Últimos 12 Meses</h3>
+    <h3 class="chart-title">Alertas PLD (Alto Risco) por Subtipo — ${nMonths} Meses</h3>
     <div class="trend-muted" style="margin-bottom:.75rem">Distribuição mensal dos principais subtipos dentro de casos de alto risco.</div>
     <div style="position:relative;flex:1;min-height:420px"><canvas id="chMonthlySubtypes"></canvas></div>
     <div style="overflow-x:auto;margin-top:1rem">
@@ -2320,7 +3060,7 @@ function renderMonthlyReport(cases) {
   });
 
   // Third chart: COAF conversion index
-  const coafSeries = getLast12MonthsCoafIndex(cases);
+  const coafSeries = getLast12MonthsCoafIndex(cases, nMonths, endMonthKey);
   const coafCard = document.createElement('div');
   coafCard.className = 'chart-card span-2';
   coafCard.style.cssText = 'min-height:820px;display:flex;flex-direction:column;';
@@ -2340,7 +3080,7 @@ function renderMonthlyReport(cases) {
   </tr>`;
   const coafTotalRow2 = `<tr style="font-weight:700;border-top:2px solid var(--border)"><td>Total Alertas</td>${coafSeries.map(s=>`<td style="text-align:center">${(s.emAnalise+s.diligencias+s.coaf+s.concluidos)||''}</td>`).join('')}</tr>`;
   coafCard.innerHTML = `
-    <h3 class="chart-title">Índice de Comunicações ao COAF — Alertas PLD Alto Risco (Últimos 12 Meses)</h3>
+    <h3 class="chart-title">Índice de Comunicações ao COAF — Alertas PLD Alto Risco (${nMonths} Meses)</h3>
     <div class="trend-muted" style="margin-bottom:.75rem">Alertas de PLD por status (Data Combinada). Índice de Conversão = COAF / (Concluídos + COAF).</div>
     <div style="position:relative;flex:1;min-height:380px"><canvas id="chCoafIndex"></canvas></div>
     <div style="overflow-x:auto;margin-top:1rem">
@@ -2511,7 +3251,7 @@ function renderMonthlyReport(cases) {
   });
 
   // Fourth chart: Safra de Alertas por Data de Conclusão
-  const safraData = getSafraConcluidaData(allCases);
+  const safraData = getSafraConcluidaData(cases, endMonthKey);
   const safraCard = document.createElement('div');
   safraCard.className = 'chart-card span-2';
   safraCard.style.cssText = 'min-height:560px;display:flex;flex-direction:column;';
@@ -2608,6 +3348,7 @@ function renderAll(){
     updateComparisonCards([]);
     // renderTrendCards verifica allCases internamente, não precisa chamar aqui
     if (typeof renderMonthlyReport === 'function') renderMonthlyReport([]);
+    if (typeof renderKypReport === 'function') renderKypReport([]);
     return;
   }
   
@@ -2621,7 +3362,9 @@ function renderAll(){
   updateComparisonCards(filtered);
   // Tendências usa window.renderTrendCards com allCases completo, sem filtro de data
   setTimeout(function(){ if(typeof window.renderTrendCards==='function') window.renderTrendCards(allCases); }, 50);
-  renderMonthlyReport(allCases);
+  const filterSummary = { ...filters, dateFrom: '', dateTo: '' };
+  renderMonthlyReport(applyFilters(allCases, filterSummary));
+  renderKypReport(applyFilters(allCases, filterSummary));
   document.getElementById('filtersSection').style.display='flex';
   document.getElementById('dateFilters').style.display='flex';
   document.getElementById('slaAlertsPanel').style.display='block';
@@ -2696,7 +3439,7 @@ function renderFilters(){
   const hasCoaf   = subset.some(c=>isCoaf(c.status));
 
   let h = ``;
-  h += `<select class="filter-select" onchange="filters.tipo=this.value;renderAll()">
+  h += `<select onclick="event.stopPropagation()" class="filter-select" onchange="filters.tipo=this.value;renderAll()">
           <option value="">Todos os tipos</option>
           ${tipos.map(t=>`<option${filters.tipo===t?' selected':''}>${t}</option>`).join('')}
         </select>`;
@@ -2705,17 +3448,17 @@ function renderFilters(){
   const subtipoOptions = subtiposPLD.filter(s=>subtipoSet.has(s));
   if (filters.subtipoPLD && !subtipoSet.has(filters.subtipoPLD)) filters.subtipoPLD = '';
   if ((!filters.tipo || filters.tipo === 'Alerta PLD') && subtipoOptions.length) {
-    h += `<select class="filter-select" onchange="filters.subtipoPLD=this.value;renderAll()">
+    h += `<select onclick="event.stopPropagation()" class="filter-select" onchange="filters.subtipoPLD=this.value;renderAll()">
             <option value="">Todos os subtipos PLD</option>
             ${subtipoOptions.map(s=>`<option value="${s}"${filters.subtipoPLD===s?' selected':''}>${s}</option>`).join('')}
           </select>`;
   }
-  h += `<select class="filter-select" onchange="filters.risco=this.value;renderAll()">
+  h += `<select onclick="event.stopPropagation()" class="filter-select" onchange="filters.risco=this.value;renderAll()">
           <option value="">Todos os riscos</option>
           ${['Alto','Médio','Baixo'].filter(r=>riscoSet.has(r)).map(r=>`<option${filters.risco===r?' selected':''}>${r}</option>`).join('')}
         </select>`;
   const resps = Array.from(respsSet).sort();
-  h += `<select class="filter-select" onchange="filters.responsavel=this.value;renderAll()">
+  h += `<select onclick="event.stopPropagation()" class="filter-select" onchange="filters.responsavel=this.value;renderAll()">
           <option value="">Todos os responsáveis</option>
           ${resps.map(r=>`<option${filters.responsavel===r?' selected':''}>${r}</option>`).join('')}
         </select>`;
@@ -2723,14 +3466,14 @@ function renderFilters(){
                       ${hasClosed?`<option value="closed"${filters.status==='closed'?' selected':''}>Concluídos</option>`:''}
                       ${hasCoaf?`<option value="coaf"${filters.status==='coaf'?' selected':''}>Comunicados</option>`:''}
                       ${Array.from(statusesSet).sort().map(s=>`<option value="${s}"${filters.status===s?' selected':''}>${s}</option>`).join('')}`;
-  h += `<select class="filter-select" onchange="filters.status=this.value;renderAll()">
+  h += `<select onclick="event.stopPropagation()" class="filter-select" onchange="filters.status=this.value;renderAll()">
           <option value="">Todos os status</option>
           ${statusOpts}
         </select>`;
   const slaOrder = ['breached','warning','ok','resolved'];
   const slaLabels = {breached:'⚠ Estourado', warning:'⏳ Em Risco', ok:'✓ No Prazo', resolved:'✅ Resolvido'};
   const slaOptions = slaOrder.filter(k=>slaPossible.includes(k)).map(k=>`<option value="${k}"${filters.sla===k?' selected':''}>${slaLabels[k]}</option>`).join('');
-  h += `<select class="filter-select" onchange="filters.sla=this.value;renderAll()">
+  h += `<select onclick="event.stopPropagation()" class="filter-select" onchange="filters.sla=this.value;renderAll()">
           <option value="">Todos os SLA</option>
           ${slaOptions}
         </select>`;
@@ -3236,6 +3979,34 @@ if (document.readyState === 'loading') {
   bindTabs();
 }
 
+function switchSubTab(subtabId) {
+  document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.subtab === subtabId);
+  });
+  document.querySelectorAll('.sub-tab-content').forEach(el => {
+    el.classList.toggle('active', el.id === 'sub-tab-' + subtabId);
+  });
+  if (subtabId === 'relatorio-kyp') {
+    setTimeout(() => {
+      if (typeof chartInstances !== 'undefined') chartInstances.forEach(c => { try { c.resize(); } catch(e){} });
+    }, 60);
+  }
+}
+
+function bindSubTabs() {
+  document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.onclick = () => switchSubTab(btn.dataset.subtab);
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bindSubTabs);
+} else {
+  bindSubTabs();
+}
+
+// Estado dos filtros individuais dos gráficos KYP
+window.kypState = window.kypState || { volPeriod: 12, slaMonth: null, safraMonth: null };
+
 // ── PLUGIN: total label on top of every stacked bar ──────────────────────────
 Chart.register({
   id: 'stackedTotalLabel',
@@ -3351,20 +4122,20 @@ window.renderTrendCards = function(cases) {
         trendTab.innerHTML = `
             <div id="trendFilters" class="filters" style="margin-bottom:1rem; display:flex; gap:1rem; align-items:center; flex-wrap: wrap;">
               <span class="subtitle">Agrupamento:</span>
-              <select id="trendTimeframe" class="filter-select" onchange="window.trendTimeframe=this.value; window.updateTrendDropdowns(); window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)">
+              <select onclick="event.stopPropagation()" id="trendTimeframe" class="filter-select" onchange="window.trendTimeframe=this.value; window.updateTrendDropdowns(); window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)">
                   <option value="month" ${window.trendTimeframe === 'month' ? 'selected' : ''}>Mensal</option>
                   <option value="quarter" ${window.trendTimeframe === 'quarter' ? 'selected' : ''}>Trimestral</option>
               </select>
               <span class="subtitle">Analisar Safra (Atual):</span>
-              <select id="trendMonthCurr" class="filter-select" onchange="window.trendCurrKey=this.value; window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)"></select>
+              <select onclick="event.stopPropagation()" id="trendMonthCurr" class="filter-select" onchange="window.trendCurrKey=this.value; window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)"></select>
               <span class="subtitle">comparado com (Anterior):</span>
-              <select id="trendMonthPrev" class="filter-select" onchange="window.trendPrevKey=this.value; window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)"></select>
+              <select onclick="event.stopPropagation()" id="trendMonthPrev" class="filter-select" onchange="window.trendPrevKey=this.value; window.renderTrendCards(typeof applyFilters === 'function' ? applyFilters(allCases, filters) : allCases)"></select>
               
               <button class="filter-input" style="margin-left:auto; cursor:pointer;" onclick="window.copyTrendSummary()">📋 Copiar Resumo</button>
             </div>
             
             <div id="trendSummaryCard" class="chart-card" style="margin-bottom:1rem; border-left: 4px solid var(--foreground);"></div>
-            <div id="trendForecastCard" class="chart-card" style="margin-bottom:1rem; border-left: 4px solid var(--coaf);"></div>
+            <div id="trendForecastCard" style="display:none;" class="chart-card" style="margin-bottom:1rem; border-left: 4px solid var(--coaf);"></div>
             
             <div id="trendCardsGrid" class="kpi-grid" style="margin-bottom:1rem"></div>
             <div id="trendListsGrid" class="charts-grid" style="margin-bottom:1rem;"></div>
@@ -3543,6 +4314,106 @@ window.renderTrendCards = function(cases) {
         window.drawSparkline(s3, dHigh, '#ef4444');
         window.drawSparkline(s4, dSla, '#f43f5e');
     }, 150);
+
+    
+
+window.exportCardToPNG = function(cardId, filename) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    // Ocultar temporariamente os botões
+    const buttons = card.querySelectorAll('.export-buttons-kyp');
+    const oldDisplays = [];
+    buttons.forEach(b => { 
+        oldDisplays.push(b.style.display); 
+        b.style.display = 'none'; 
+    });
+
+    // O html2canvas odeia "overflow: auto" ou "max-height". Ele costuma não renderizar ou cortar.
+    // Vamos pegar tudo que tem overflow no card e forçar a ficar visível/expandido pra foto.
+    const scrollables = card.querySelectorAll('[style*="overflow"]');
+    const oldStyles = [];
+    scrollables.forEach(el => {
+        oldStyles.push({
+            overflow: el.style.overflow,
+            overflowX: el.style.overflowX,
+            overflowY: el.style.overflowY,
+            maxHeight: el.style.maxHeight
+        });
+        el.style.overflow = 'visible';
+        el.style.overflowX = 'visible';
+        el.style.overflowY = 'visible';
+        el.style.maxHeight = 'none';
+    });
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const computedBg = window.getComputedStyle(card).backgroundColor;
+    let finalBg = isDark ? '#1e293b' : '#ffffff';
+    if (computedBg && computedBg !== 'rgba(0, 0, 0, 0)' && computedBg !== 'transparent') {
+        finalBg = computedBg;
+    }
+
+    html2canvas(card, {
+        backgroundColor: finalBg,
+        scale: 2,
+        useCORS: true,
+        scrollY: -window.scrollY // Previne cortes em páginas roladas
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        // Restaurar estado
+        buttons.forEach((b, i) => b.style.display = oldDisplays[i]);
+        scrollables.forEach((el, i) => {
+            el.style.overflow = oldStyles[i].overflow;
+            el.style.overflowX = oldStyles[i].overflowX;
+            el.style.overflowY = oldStyles[i].overflowY;
+            el.style.maxHeight = oldStyles[i].maxHeight;
+        });
+    }).catch(err => {
+        console.error("Erro:", err);
+        buttons.forEach((b, i) => b.style.display = oldDisplays[i]);
+        scrollables.forEach((el, i) => {
+            el.style.overflow = oldStyles[i].overflow;
+            el.style.overflowX = oldStyles[i].overflowX;
+            el.style.overflowY = oldStyles[i].overflowY;
+            el.style.maxHeight = oldStyles[i].maxHeight;
+        });
+        alert("Erro ao exportar PNG");
+    });
+};
+
+window.exportTableToCSV = function(cardId, filename) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    const tables = card.querySelectorAll('table');
+    if (!tables.length) return;
+
+    let csv = [];
+    tables.forEach(table => {
+        const rows = table.querySelectorAll('tr');
+        for (let i = 0; i < rows.length; i++) {
+            let row = [], cols = rows[i].querySelectorAll('td, th');
+            for (let j = 0; j < cols.length; j++) {
+                let text = cols[j].innerText.trim().replace(/"/g, '""');
+                csv.push('"' + text + '"');
+            }
+            csv.push('\n');
+        }
+        csv.push('\n'); // space between tables
+    });
+
+    const csvFile = new Blob([csv.join('')], {type: 'text/csv;charset=utf-8;'});
+    const downloadLink = document.createElement('a');
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+};
 
     const fList = (lista, colorTheme, bgTheme, icon) => {
         if(!lista.length) return `<div class="trend-muted" style="padding:2rem 1rem; text-align:center;">Sem variações significativas no período.</div>`;
@@ -3782,109 +4653,50 @@ window.drawSparkline = function(canvasId, dataPoints, strokeColor) {
 }
 // ============================================================================
 
+
+setTimeout(() => {
+  try {
+    if (!window.getMonthlyTrendData || !window.allCases) return;
+
+    const stats = getMonthlyTrendData(allCases);
+    const histKeys = Object.keys(stats.history || {}).sort();
+    const last3 = histKeys.slice(-3);
+
+    if (!last3.length) return;
+
+    const avgEntries = last3.reduce((a,k)=>a+(stats.history[k]?.entries||0),0)/last3.length;
+    const avgResolved = last3.reduce((a,k)=>a+(stats.history[k]?.resolved||0),0)/last3.length;
+
+    const prevKey = histKeys[histKeys.length-2];
+    const prevEntries = stats.history[prevKey]?.entries || 0;
+
+    const trend = avgEntries > prevEntries ? 'alta' : avgEntries < prevEntries ? 'queda' : 'estabilidade';
+    const projBalance = Math.round(avgEntries - avgResolved);
+
+    let leitura = 'equilíbrio';
+    if (projBalance > 0) leitura = 'acúmulo';
+    if (projBalance < 0) leitura = 'redução';
+
+    const el = document.getElementById('trendForecastCard');
+    if (!el) return;
+
+    el.innerHTML = `
+      <div style="font-size:0.9rem; line-height:1.5;">
+        <strong>Projeção Operacional Baseada em Tendência</strong><br><br>
+        Tendência de <strong>${trend}</strong> nas entradas.<br><br>
+        Média: <strong>${Math.round(avgEntries)}</strong> entradas vs 
+        <strong>${Math.round(avgResolved)}</strong> resoluções.<br><br>
+        Projeção:<br>
+        • Entradas: ~${Math.round(avgEntries)}<br>
+        • Resoluções: ~${Math.round(avgResolved)}<br>
+        • Backlog: <strong>${projBalance > 0 ? '+' : ''}${projBalance}</strong><br><br>
+        <strong>Leitura:</strong> ${leitura} de backlog.
+      </div>
+    `;
+  } catch(e) {
+    console.warn('forecast safe error', e);
+  }
+}, 800);
+
 </script>
-<footer-watermark data-tess-watermark="1" style="position:fixed;right:12px;bottom:12px;z-index:2147483647"><div class="tess-wrap" aria-live="polite">
-  <a href="https://tess.pareto.io/" target="_blank" rel="noopener noreferrer" class="tess-tag" aria-label="Made with Tess">
-    <span class="tess-text">Made with</span>
-    <svg class="tess-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1986 542" fill="none">
-      <path d="M1.84122 234.485C2.5103 258.289 0.0171567 282.444 3.13957 305.906C6.77175 321.611 36.809 314.132 48.7889 313.4C97.1145 305.914 139.458 271.305 156.249 225.598C171.487 183.209 163.139 137.494 164.501 93.1716C164.565 77.9758 164.39 63.0743 164.716 47.8227C163.872 32.1097 171.383 3.9616 149.279 1.2168C102.993 -2.5941 49.6412 0.636019 19.1738 39.9464C-1.20154 64.3632 0.423388 96.7677 0.773863 126.841V127L1.83325 234.493L1.84122 234.485Z" fill="#F4F4F4"/>
-      <path d="M1.4599 364.947C1.56345 401.378 4.48673 436.487 25.5948 467.635C34.1018 480.85 44.4249 493.412 56.8189 503.118C70.2724 513.509 86.3305 521.592 101.919 528.235C120.263 535.817 140.001 539.191 159.619 540.201C180.17 541.379 202.314 541.57 223.493 540.838C259.56 540.074 291.326 533.995 316.672 506.683C330.189 492.107 341.293 475.105 344.399 455.08C348.804 429.613 342.559 405.403 328.062 384.129C314.553 364.422 292.991 350.086 270.505 342.225C263.129 339.783 253.347 337.961 246.226 337.476C219.869 337.125 117.539 337.507 53.123 337.348C41.5813 337.34 30.852 337.348 19.6766 337.348C16.0842 337.547 12.3485 336.815 9.31372 338.096C0.997915 342.734 1.42008 356.331 1.46787 364.804V364.963L1.4599 364.947Z" fill="#F4F4F4"/>
-      <path d="M541.251 306.783C540.582 282.979 543.075 258.824 539.953 235.362C536.32 219.657 506.283 227.136 494.303 227.868C445.978 235.354 403.634 269.963 386.843 315.67C371.605 358.059 379.953 403.774 378.591 448.096C378.527 463.292 378.703 478.194 378.376 493.445C379.22 509.158 371.709 537.306 393.813 540.051C440.091 543.87 493.451 540.64 523.918 501.322C544.286 476.905 542.661 444.5 542.31 414.435V414.276L541.251 306.783Z" fill="#F4F4F4"/>
-      <path d="M541.626 176.322C541.523 139.891 538.6 104.782 517.491 73.6342C508.985 60.4193 498.661 47.8569 486.267 38.1506C472.814 27.7602 456.756 19.6769 441.168 13.0337C422.824 5.4517 403.086 2.07837 383.467 1.06797C362.916 -0.109512 340.773 -0.300455 319.593 0.431493C283.526 1.19526 251.76 7.27361 226.415 34.5864C212.897 49.1617 201.794 66.1635 198.687 86.1887C194.282 111.656 200.527 135.866 215.024 157.14C228.533 176.847 250.095 191.183 272.582 199.044C279.957 201.486 289.739 203.308 296.86 203.794C323.217 204.144 425.548 203.762 489.963 203.921C501.505 203.929 512.234 203.921 523.41 203.921C527.002 203.722 530.738 204.454 533.773 203.173C542.088 198.535 541.666 184.938 541.618 176.465V176.306L541.626 176.322Z" fill="#F4F4F4"/>
-      <path d="M1346.08 331.633H1000.71C1001.31 403.224 1059.07 470.845 1131.7 476.045C1196.94 480.709 1251.73 449.696 1282.44 392.729L1331.08 416.682C1283.12 500.083 1192.62 544.362 1096.92 521.543C969.409 491.139 913.368 342.352 967.88 227.67C1009.68 139.733 1102.6 96.9629 1197.67 120.135C1290.64 142.793 1356.88 236.025 1346.07 331.644L1346.08 331.633ZM1289.41 280.283C1279.12 224.664 1234.82 179.487 1179.31 168.457C1116.57 155.983 1055.75 180.696 1022.7 235.437C1017.37 244.274 1005.73 268.376 1005.38 278.079C1005.34 279.395 1005.56 279.47 1006.58 280.283H1289.4H1289.41Z" fill="#F4F4F4"/>
-      <path d="M1983.37 239.636H1931.51C1929.11 234.811 1929.69 228.446 1928.31 222.508C1909.69 142.605 1737.59 148.286 1749.48 235.613C1755.42 279.261 1842.03 284.674 1876.45 293.65C1927.8 307.043 1976.49 330.504 1984.3 389.011C1998.94 498.719 1885.96 538.986 1795.88 524.03C1728.23 512.808 1676.94 462.656 1678.63 391.547H1729.95C1729.76 433.515 1758.03 462.741 1797.31 472.327C1843.08 483.506 1929.17 472.872 1933.09 412.386C1937.64 342.475 1835.75 339.137 1787.67 326.835C1742.78 315.345 1701.43 292.473 1696.93 241.101C1686.67 123.852 1825.3 91.3408 1912.43 131.405C1955.94 151.41 1982.31 191.506 1983.36 239.636H1983.37Z" fill="#F4F4F4"/>
-      <path d="M1402.21 391.545C1404.83 392.358 1403.54 399.386 1403.83 401.697C1413.01 474.817 1503.49 489.859 1561.28 467.243C1624.15 442.649 1621.84 372.021 1556.98 349.02C1491.48 325.795 1376.1 332.727 1369.55 238.072C1361.17 117.025 1516.76 87.9583 1600.47 139.694C1635.59 161.4 1657.24 198.96 1656.14 240.704C1655.76 241.238 1654.77 239.634 1654.55 239.634H1603.76C1603.27 176.313 1533.03 159.763 1481.64 168.268C1445.03 174.334 1403.72 211.691 1428.57 250.685C1446.71 279.141 1523.22 286.405 1555.87 295.563C1619.98 313.535 1667.01 347.897 1658.15 421.895C1647.79 508.452 1550.45 534.619 1476.13 525.108C1405.72 516.101 1351.27 464.965 1352.48 391.534H1402.2L1402.21 391.545Z" fill="#F4F4F4"/>
-      <path d="M775.088 0V119.817H936.548V173.307H775.088L775.045 392.122C776.778 429.373 787.449 463.563 827.482 473.384C864.811 482.542 903.379 470.153 936.548 453.593V510.292C919.162 516.272 901.84 522.573 883.47 525.119C796.078 537.219 726.992 495.358 723.774 402.767V173.307H628.598V120.887L723.763 119.817V0H775.088Z" fill="#F4F4F4"/>
-    </svg>
-  </a>
-
-  <span class="tess-tooltip" role="tooltip">
-    AI-generated (possibly user-edited) content - please verify carefully and submit no personal information. If you believe this content violates your rights or applicable laws, you may submit a report for review
-  </span>
-</div>
-  
-  <style>
-    .tess-wrap { position: relative; }
-
-    .tess-tag {
-      display: inline-flex;
-      align-items: center;
-      background-color: #1a1a1a;
-      color: white;
-      font-family: "Inter", Arial, sans-serif;
-      font-weight: 500;
-      font-size: 14px;
-      line-height: 1;
-      border-radius: 999px;
-      padding: 6px 14px;
-      text-decoration: none;
-      gap: 8px;
-      transition: all 0.25s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      position: relative;
-    }
-  
-    .tess-tag:hover {
-      background-color: #000000;
-      transform: translateY(-1px);
-    }
-
-    .tess-tooltip {
-      position: absolute;
-      bottom: calc(100% + 12px);
-      right: 0;
-      max-width: 360px;
-      width: max-content;
-      background: #fff;
-      color: #111;
-      border-radius: 10px;
-      padding: 14px 16px;
-      font: 400 12px "Inter", Arial, sans-serif;
-      line-height: 1.45;
-      box-shadow: 0 8px 24px rgba(0,0,0,.18);
-      border: 1px solid rgba(0,0,0,.06);
-      text-align: left;
-      opacity: 0;
-      transform: translateY(4px);
-      transition: opacity .2s ease, transform .2s ease;
-      pointer-events: auto;
-      z-index: 1000;
-    }
-
-    .tess-tooltip a { color: #111; text-decoration: underline; }
-
-    .tess-wrap:hover .tess-tooltip,
-    .tess-tag:focus + .tess-tooltip,
-    .tess-wrap:focus-within .tess-tooltip {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .tess-tooltip::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      right: 18px;
-      border: 8px solid transparent;
-      border-top-color: #fff;
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,.08));
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .tess-tooltip { background:#2a2a2a; color:#f5f5f5; border-color: rgba(255,255,255,.08); }
-      .tess-tooltip a { color:#f5f5f5; }
-      .tess-tooltip::after { border-top-color:#2a2a2a; }
-    }
-  
-    .tess-logo {
-      height: 16px;
-      width: auto;
-      display: block;
-    }
-  
-    .tess-text {
-      opacity: 0.9;
-    }
-  </style>
-  </footer-watermark></body>
 </html>
